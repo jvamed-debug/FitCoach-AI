@@ -185,6 +185,25 @@ async def recalculate_athlete_load(
     logger.info("Training load recalculated for athlete %s (%d days)", athlete_id, len(series))
 
 
+async def recalculate_athlete_load_bg(athlete_id: str, days_back: int = 90) -> None:
+    """
+    Background-safe variant of recalculate_athlete_load.
+
+    Opens its OWN database session instead of depending on a request-scoped
+    session, which FastAPI closes once the HTTP response is sent — before
+    BackgroundTasks run. Use this inside `background_tasks.add_task(...)`;
+    use `recalculate_athlete_load(db, ...)` when you already hold a session
+    (inside a request handler or a test).
+    """
+    from app.database import AsyncSessionLocal  # local import avoids a circular import
+
+    try:
+        async with AsyncSessionLocal() as db:
+            await recalculate_athlete_load(db, athlete_id, days_back)
+    except Exception:
+        logger.exception("Background load recalculation failed for athlete %s", athlete_id)
+
+
 async def get_current_load(db: AsyncSession, athlete_id: str) -> dict | None:
     """Returns the most recent CTL/ATL/TSB row for an athlete."""
     result = await db.execute(

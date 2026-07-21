@@ -28,7 +28,7 @@ from app.models.workout import Workout
 from app.services.training_load import (
     get_current_load,
     get_load_history,
-    recalculate_athlete_load,
+    recalculate_athlete_load_bg,
 )
 
 router = APIRouter()
@@ -109,7 +109,7 @@ async def recalculate_load(
     athlete: Athlete = Depends(require_lgpd_consent),
     db: AsyncSession = Depends(get_db),
 ):
-    background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), days_back)
+    background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), days_back)
     return {"detail": f"Recalculando carga dos últimos {days_back} dias em background"}
 
 
@@ -231,7 +231,7 @@ async def create_workout(
     await db.refresh(workout)
 
     # Trigger background recalculation of training load
-    background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), 90)
+    background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), 90)
 
     return _workout_to_dict(workout)
 
@@ -270,7 +270,7 @@ async def sync_strava(
     )
 
     if imported_ids:
-        background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), 90)
+        background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), 90)
 
     return {
         "imported": len(imported_ids),
@@ -356,5 +356,5 @@ async def delete_workout(
         raise HTTPException(status_code=404, detail="Treino não encontrado")
     await db.delete(workout)
     await db.commit()
-    background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), 90)
+    background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), 90)
     return {"detail": "Treino removido"}

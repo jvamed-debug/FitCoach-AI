@@ -26,7 +26,7 @@ from app.database import get_db
 from app.dependencies import require_lgpd_consent
 from app.models.athlete import Athlete
 from app.models.strength import StrengthSession, StrengthExercise
-from app.services.training_load import recalculate_athlete_load
+from app.services.training_load import recalculate_athlete_load_bg
 from app.utils.calculations import calculate_strength_tss
 
 router = APIRouter()
@@ -175,7 +175,7 @@ async def create_session(
     )
     session = result.scalar_one()
 
-    background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), 90)
+    background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), 90)
 
     return _session_dict(session)
 
@@ -261,7 +261,7 @@ async def update_session(
 
     db.add(session)
     await db.commit()
-    background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), 90)
+    background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), 90)
     return {"detail": "Sessão atualizada"}
 
 
@@ -281,7 +281,7 @@ async def delete_session(
         raise HTTPException(status_code=404, detail="Sessão não encontrada")
     await db.delete(session)
     await db.commit()
-    background_tasks.add_task(recalculate_athlete_load, db, str(athlete.id), 90)
+    background_tasks.add_task(recalculate_athlete_load_bg, str(athlete.id), 90)
     return {"detail": "Sessão removida"}
 
 

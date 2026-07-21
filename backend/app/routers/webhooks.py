@@ -13,7 +13,7 @@ import hmac
 import logging
 from datetime import datetime, timezone, date
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -132,12 +132,35 @@ async def _process_strava_event(event: dict, db: AsyncSession) -> None:
                 aspect_type, activity_id, athlete.id)
 
 
+async def _process_strava_event_bg(event: dict) -> None:
+    """
+    Background entrypoint: opens its OWN DB session. The request-scoped session
+    is closed once the webhook response is returned, so background work must not
+    reuse it.
+    """
+    from app.database import AsyncSessionLocal
+
+    try:
+        async with AsyncSessionLocal() as db:
+            await _process_strava_event(event, db)
+    except Exception:
+        logger.exception("Background Strava event processing failed")
+
+
 @router.post("/strava", status_code=200, summary="Strava activity event")
 async def strava_webhook_event(
     request: Request,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
 ):
+    # Trust model: Strava does NOT sign webhook events, so this endpoint is
+    # effectively unauthenticated. Safety does not rely on the HMAC below —
+    # it comes from the fact that an event only triggers a re-fetch of the
+    # REAL activity from Strava, keyed on an owner_id that must match an
+    # existing ACTIVE connection (see _process_strava_event). No attacker-
+    # supplied data is persisted. The HMAC check is kept as defence-in-depth:
+    # if a signature IS present (e.g. added by a proxy) a tampered one is
+    # rejected, but a missing signature cannot be required for genuine events.
+    # Mitigate abuse (forced syncs / Strava API quota) with edge rate limiting.
     body = await request.body()
     signature = request.headers.get("X-Hub-Signature", "").removeprefix("sha256=")
 
@@ -150,7 +173,7 @@ async def strava_webhook_event(
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
     logger.info("Strava webhook event: %s %s", event.get("object_type"), event.get("aspect_type"))
-    background_tasks.add_task(_process_strava_event, event, db)
+    background_tasks.add_task(_process_strava_event_bg, event)
     return {"status": "ok"}
 
 
@@ -166,13 +189,11 @@ class AppleHealthPayload(BaseModel):
     steps: int | None = None
 
 
-@router.post("/apple-health/{token}", status_code=200,
-             summary="Apple Health daily metrics (iOS Shortcut)")
-async def apple_health_ingest(
-    token: str,
-    payload: AppleHealthPayload,
-    db: AsyncSession = Depends(get_db),
-):
+async def _ingest_apple_health(token: str, payload: AppleHealthPayload, db: AsyncSession) -> dict:
+    """Shared ingest logic. `token` is a per-athlete secret and is never logged."""
+    if not token:
+        raise HTTPException(status_code=401, detail="Token ausente")
+
     result = await db.execute(
         select(Athlete).where(
             Athlete.apple_health_token == token,
@@ -216,3 +237,34 @@ async def apple_health_ingest(
 
     logger.info("Apple Health data ingested for athlete %s date %s", athlete.id, metric_date)
     return {"status": "ok", "date": str(metric_date)}
+
+
+@router.post("/apple-health", status_code=200,
+             summary="Apple Health daily metrics (token no header Authorization)")
+async def apple_health_ingest_header(
+    payload: AppleHealthPayload,
+    authorization: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Preferred endpoint. Send the per-athlete token as `Authorization: Bearer <token>`.
+    Tokens in headers do not leak into access logs, proxies or browser history the
+    way path parameters do.
+    """
+    token = (authorization or "").removeprefix("Bearer ").strip()
+    return await _ingest_apple_health(token, payload, db)
+
+
+@router.post("/apple-health/{token}", status_code=200,
+             summary="[DEPRECATED] Apple Health metrics with token in the URL path")
+async def apple_health_ingest_path(
+    token: str,
+    payload: AppleHealthPayload,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Deprecated: the token travels in the URL and can leak via logs. Kept for
+    backward compatibility with existing iOS Shortcuts — migrate to
+    `POST /apple-health` with an `Authorization: Bearer` header.
+    """
+    return await _ingest_apple_health(token, payload, db)
