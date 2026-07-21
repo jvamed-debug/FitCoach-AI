@@ -1,0 +1,277 @@
+Você é um arquiteto de software, engenheiro full-stack e especialista em apps de performance esportiva.
+
+Quero criar uma aplicação para me auxiliar na preparação física combinando musculação e ciclismo.
+
+Objetivo principal:
+Criar um sistema que integre dados do Garmin Connect, Strava e TrainingPeaks para analisar meus treinos, fadiga, evolução, recuperação e gerar recomendações diárias de treino com apoio de uma IA via API.
+
+Contexto do usuário:
+- Pratico musculação e ciclismo.
+- Quero planejar os próximos treinos dia a dia.
+- Quero que a IA analise os resultados anteriores antes de sugerir novos treinos.
+- Quero usar o sistema também dentro de uma rotina automatizada no Claude Code.
+- O app deve ser pensado para uso pessoal inicialmente, mas com arquitetura escalável.
+
+Funcionalidades desejadas:
+1. Conectar com Garmin Connect, Strava e TrainingPeaks.
+2. Importar dados de:
+   - Atividades de ciclismo
+   - Frequência cardíaca
+   - Potência
+   - Cadência
+   - Tempo em zonas
+   - Sono, descanso e recuperação, quando disponível
+   - Histórico de musculação, quando disponível
+3. Permitir registro manual de:
+   - Treinos de musculação
+   - Carga, séries, repetições e RPE
+   - Dor muscular
+   - Cansaço geral
+   - Qualidade do sono
+   - Peso corporal
+4. Criar um banco de dados unificado de performance.
+5. Usar uma IA via API para:
+   - Analisar treinos anteriores
+   - Detectar sinais de fadiga
+   - Avaliar progressão
+   - Recomendar treino do dia
+   - Ajustar a semana conforme resposta do atleta
+   - Explicar o motivo de cada recomendação
+6. Gerar planos combinando:
+   - Treinos de força
+   - Pedais leves
+   - Pedais intervalados
+   - Treinos longos
+   - Dias de descanso
+   - Mobilidade e recuperação
+7. Exportar ou sincronizar treinos futuros para plataformas compatíveis, quando possível.
+
+Requisitos técnicos:
+- Sugira uma arquitetura moderna.
+- Sugira stack recomendada.
+- Separe backend, frontend, banco de dados, integrações e módulo de IA.
+- Considere segurança, autenticação OAuth e armazenamento seguro de tokens.
+- Considere que algumas APIs podem ter limitações de acesso.
+- Proponha alternativas caso uma integração oficial não esteja disponível.
+- Crie uma estrutura inicial de pastas.
+- Crie um roadmap em fases.
+- Crie os primeiros prompts internos que a IA usará para gerar os treinos.
+- Crie exemplos de modelos de dados.
+- Crie exemplos de endpoints da API.
+- Crie uma rotina diária automatizada que possa ser executada pelo Claude Code.
+
+Formato da resposta:
+1. Visão geral do produto
+2. Arquitetura recomendada
+3. Stack sugerida
+4. Integrações com Garmin, Strava e TrainingPeaks
+5. Modelo de dados inicial
+6. Fluxo diário da IA
+7. Prompt do agente de treino
+8. Estrutura de pastas
+9. Roadmap MVP
+10. Próximos passos práticos
+
+Uma boa primeira versão do app seria:
+
+MVP: importar dados do Strava/Garmin, registrar musculação manualmente, calcular carga de treino, fadiga e recuperação, e gerar uma recomendação diária via IA.
+
+Observação importante: não consigo confirmar agora o estado atual das APIs do Garmin Connect, TrainingPeaks e Strava porque a busca web está desativada. Na implementação real, será necessário verificar permissões, OAuth, limites e acesso comercial de cada plataforma.
+
+Para avançarmos, a melhor próxima resposta sua seria: você quer que eu transforme isso em um prompt para Claude Code criar o projeto inteiro, em um documento técnico, ou em um roadmap de desenvolvimento do MVP?
+
+Aqui está um documento em formato Markdown com uma proposta técnica detalhada para a aplicação, incluindo arquitetura, modelos de dados, alternativas de integração (dado que as APIs oficiais de Garmin e TrainingPeaks têm limitações para uso pessoal), fluxos da IA e um roadmap para o MVP. Você pode baixar ou visualizar o arquivo através do link a seguir:
+
+Proposta Técnica para Aplicação de Treinamento (Musculação e Ciclismo)
+1. Visão Geral do Produto
+
+O objetivo é construir uma aplicação para auxiliar na preparação física de um atleta que combina musculação e ciclismo. O sistema deve consolidar dados de atividades, analisar sinais de fadiga e progresso, e gerar recomendações diárias de treino usando uma IA (modelo via API). A aplicação será modular para evoluir de um uso pessoal (MVP) para um produto escalável.
+
+1.1 Escopo principal
+Integrar dados de plataformas populares (Strava, TrainingPeaks, Garmin) para obter métricas de treinos, sono e recuperação.
+Permitir o registro manual de treinos de musculação, dores musculares, descanso e qualidade do sono.
+Analisar a carga de treino (CTL/ATL/TSB) e sugerir treinos futuros via IA.
+Exportar e sincronizar treinos planejados para as plataformas compatíveis.
+Possibilitar a execução de rotinas automatizadas via Claude Code Routines (ex.: um fluxo diário que importa dados, calcula indicadores e programa o próximo treino).
+2. Limitações e Considerações de Integração
+2.1 Garmin Connect
+A Garmin disponibiliza suas APIs através do Garmin Connect Developer Program. O acesso é restrito a entidades legais (empresas, universidades etc.); aplicações de uso pessoal são rejeitadas.
+É necessário solicitar acesso como empresa, fornecer site público e política de privacidade e passar por verificação da Garmin.
+Para uso pessoal, é inviável usar a API oficial. Alternativas:
+Utilizar um serviço agregador como Open Wearables (openwearables.io) que integra Garmin via autorização OAuth para empresas (ainda exige credenciais empresariais, mas abstrai a API).
+Dependendo dos dados desejados, sincronizar dados por meio de Strava (Garmin envia automaticamente treinos para Strava) e importar a partir de lá.
+2.2 TrainingPeaks
+O API oficial da TrainingPeaks é apenas para desenvolvedores aprovados e não está disponível para uso pessoal. É necessário enviar um e‑mail explicando o caso de uso (api@trainingpeaks.com
+) e aguardar aprovação.
+Existe um projeto open‑source chamado trainingpeaks‑mcp que implementa um servidor MCP usando autenticação via cookie do navegador e permite consultar e manipular treinos sem aprovação oficial. Ele oferece várias ferramentas (listar, criar, editar treinos, acessar CTL/ATL/TSB, logar métricas de saúde, etc.). Ele não requer aprovação da API, mas seu uso pode violar os termos de uso da TrainingPeaks; portanto, recomenda‑se apenas para uso pessoal e com cautela.
+2.3 Strava
+O Strava API é público para desenvolvedores e oferece acesso via OAuth 2.0. Novos aplicativos ficam em "Single Player Mode", permitindo acesso apenas aos dados do próprio atleta. Para suportar múltiplos usuários, é necessário solicitar ampliação de capacidade ao Strava.
+Há limite de 200 requisições por 15 min e 2 000 por dia (100/1 000 para endpoints "non‑upload").
+O Strava é adequado para importar atividades de ciclismo e corrida, além de métricas como frequência cardíaca, potência e cadência.
+2.4 Alternativas de Integração
+Terra API ou Open Wearables API: APIs unificadas que conectam múltiplos dispositivos (Garmin, Suunto, Polar, TrainingPeaks etc.) mediante cadastro e fornecem dados normalizados. Podem ser usadas para centralizar ingestão de dados, mas exigem contrato comercial.
+Google Fit/Apple Health**: para capturar dados de sono, batimentos e peso.
+Planilha própria (Google Sheets): como backup para armazenamento de dados e visualização; excelente para agentes MCP.
+3. Arquitetura Recomendada
+3.1 Visão Geral
+┌───────────────────────────────────────────────────────────┐
+│                       Frontend                           │
+│  (app web/mobile – dashboard de treinos, registro manual)│
+└───────────────┬───────────────────────────────┬──────────┘
+                │                               │
+┌───────────────▼──────────────┐   ┌────────────▼───────────┐
+│        API Gateway/Backend    │   │   Servidor MCP (TP)    │
+│ (FastAPI ou NestJS + OAuth)   │   │(trainingpeaks-mcp)     │
+└───────────────▲───────────────┘   └────────────▲───────────┘
+                │                               │
+           ┌────▼──────────┐                ┌────▼───────────┐
+           │ Banco de Dados │                │ Serviços AI    │
+           │  (PostgreSQL)  │                │ (OpenAI API)   │
+           └────────────────┘                └────────────────┘
+Frontend: pode ser um aplicativo web (React/Vue) ou móvel (React Native/Flutter) para visualização dos treinos e registro manual.
+API Gateway/Backend: expõe endpoints REST/GraphQL para o frontend, gerencia autenticação e integrações. Realiza a ponte OAuth com Strava, possivelmente com TrainingPeaks via MCP e com a IA. Sugere usar Python (FastAPI) ou Node.js (NestJS).
+Servidor MCP para TrainingPeaks: opcional; roda separadamente e é integrado como um microserviço. O repositório trainingpeaks-mcp fornece uma série de ferramentas para manipular dados do TP.
+Banco de dados: PostgreSQL para armazenar usuários, treinos, sessões de musculação, métricas de saúde, e as recomendações produzidas pela IA.
+Serviços de IA: integrar via API ao modelo (OpenAI, Anthropic, ou outro) para análise dos dados e geração de recomendações de treino.
+Routines (Claude Code): para automatizar importações e gerações diárias de treinos. As rotinas são programadas no Claude Code e executam em cloud, podendo ser disparadas por horário ou via webhook.
+3.2 Segurança e Autenticação
+OAuth 2.0: implementar fluxo de autorização para Strava e, se aprovado, para TrainingPeaks e Garmin. Armazenar tokens de forma criptografada (por exemplo, usando o django-encrypted-fields ou vault).
+HTTPS: todas as comunicações devem ser feitas sobre TLS. Utilizar certificados (Let's Encrypt).
+Controle de Acesso: autenticação JWT ou sessão; aplicar RBAC caso futuramente haja múltiplos usuários ou coaches.
+4. Stack Sugerida
+Camada	Tecnologia	Observações
+Backend	Python (FastAPI) ou Node.js (NestJS)	FastAPI é leve, com boa tipagem e fácil integração com pydantic. NestJS oferece estrutura modular em TypeScript.
+Banco de dados	PostgreSQL	Suporte a tipos de dados avançados e arrays; bom para métricas.
+ORM/ODM	SQLAlchemy (Python) ou Prisma (TS)	Facilita mapeamento de tabelas e migrações.
+IA	API da OpenAI ou Anthropic	Gerar análises e planos de treino.
+Frontend Web	React ou Vue.js	Interface responsiva com dashboards e formulários.
+Mobile (opcional)	React Native ou Flutter	Acessar os treinos pelo celular.
+Routines	Claude Code Routines	Executar fluxos diários em nuvem.
+Hospedagem	AWS/GCP/Azure	Serviços como EC2/Fargate, RDS e S3; ou Heroku/DigitalOcean para MVP.
+5. Integrações Detalhadas
+5.1 Integração com Strava
+Registrar o app no Strava Developers
+.
+Configurar o redirect URI para o backend (ex.: https://seuapp.com/api/auth/strava/callback).
+Implementar fluxo OAuth (Authorization Code) para obter access_token e refresh_token. Tokens devem ser atualizados conforme expiração.
+Consumir endpoints da API:
+GET /athlete/activities: lista de atividades do atleta (corrida, ciclismo, natação).
+GET /activities/{id}: detalhes, laps, zonas de frequência cardíaca, potência e cadência.
+POST /activities: se quiser exportar treinos planejados (Strava permite upload de atividades).
+Respeitar limites: 200 requisições/15 min, 2 000/dia (100/1 000 para endpoints de leitura).
+Athlete Capacity: novo app inicia em “Single Player Mode”, permitindo apenas 1 atleta (você).
+5.2 Integração com TrainingPeaks via MCP
+Clonar o repositório trainingpeaks-mcp e executar o servidor conforme instruções. Esse servidor utiliza cookie de sessão para acessar sua conta e não requer aprovação da API.
+Executar o comando tp-mcp auth --from-browser para extrair o cookie da sessão logada no browser.
+O servidor expõe ferramentas (via JSON RPC ou HTTP) que podem ser chamadas pelo backend ou diretamente por agentes de IA. Exemplos:
+tp_get_workouts para listar treinos num intervalo
+tp_create_workout para criar um treino estruturado
+tp_analyze_workout para obter métricas de CTL/ATL/TSB
+tp_log_metrics para registrar métricas de saúde (peso, sono)
+Incluir uma camada adaptadora no backend para consumir essas ferramentas.
+Cuidados: como não é um acesso oficial, use apenas para fins pessoais e em conformidade com termos de uso.
+5.3 Integração com Garmin (quando viável)
+Só possível mediante aceitação no Garmin Connect Developer Program. Requer empresa registrada, domínio e política de privacidade.
+Caso obtida a aprovação, seguir passos: solicitar credenciais (client ID/secret), configurar endpoints de webhook para receber dados e implementar OAuth.
+Para uso pessoal, recomenda‑se capturar treinos da Garmin via Strava (sincronização automática) ou via plataformas unificadas (Terra/Open Wearables).
+5.4 Registro Manual e Outras Fontes
+Implementar formulários para registrar treinos de musculação: data, exercício, séries, repetições, carga, RPE.
+Registrar métricas subjetivas: dores, fadiga, qualidade do sono, sensação de recuperação.
+Sincronizar dados de sono/peso via Google Fit/Apple Health ou inserir manualmente.
+6. Modelo de Dados Inicial
+
+A seguir, uma proposta simplificada de entidades (usando Postgres). Cada campo pode ser estendido conforme necessidade.
+
+Tabela	Campos Principais	Observações
+athletes	id (PK), nome, email, sexo, data_nascimento, altura, peso_inicial	Dados do usuário.
+connections	id (PK), athlete_id (FK), provider (strava, tp, garmin), access_token, refresh_token, expires_at	Armazenar tokens OAuth de cada plataforma.
+workouts	id (PK), athlete_id, plataforma (strava/tp/manual), start_time, duration, sport_type, distance, tss, ctl, atl, tsb, notas	Consolidar treinos importados e planejados.
+strength_sessions	id, athlete_id, data, exercicio, series, reps, carga, rpe, duracao	Registro manual de musculação.
+metrics	id, athlete_id, data, peso, sono_horas, hrv, fadiga_subjetiva, dor_subjetiva	Métricas diárias de saúde.
+recommendations	id, athlete_id, data, recomendacao_texto, tipo_treino, parametros_json	Armazenar recomendações geradas pela IA para auditoria.
+7. Fluxo Diário da IA
+Importação de dados: rotina (cron ou Claude Routines) chama o backend para importar dados recentes da Strava e TrainingPeaks (via MCP).
+Atualização de métricas: calcular CTL/ATL/TSB (fitness, fadiga e forma), distância semanal e cargas de musculação, e atualizar banco de dados.
+Análise: enviar resumo dos dados (treinos, métricas, estado de recuperação) para a API de IA.
+Geração de recomendação: a IA retorna o treino sugerido (ex.: tipo de sessão, duração, intensidade, exercícios de musculação).
+Planejamento: backend grava a recomendação na tabela recommendations e, opcionalmente, agenda o treino no TrainingPeaks via MCP ou exporta para Strava (upload de atividade programada).
+Notificação ao usuário: enviar notificação push/e‑mail ou exibir no app.
+Feedback: após a realização do treino, o usuário registra como se sentiu; esses dados alimentam a próxima análise.
+8. Prompt Inicial da IA (exemplo)
+
+Para gerar recomendações de treino, enviaremos à API de IA um prompt estruturado contendo dados do usuário e métricas recentes. Exemplo de prompt (em inglês para modelos atuais):
+
+System: You are a professional endurance coach and strength trainer. You create daily training sessions for an athlete who cycles and lifts weights.
+
+User data:
+
+Age: 34, sex: male, weight: 78 kg, height: 1.78 m.
+FTP: 260 W, max heart rate: 186 bpm.
+Goals: Gran Fondo on August 20, 2026 (16 weeks away), increase squat strength.
+Weekly availability: cycling Tue/Thu/Sat, strength Mon/Fri, rest Wed/Sun.
+
+Recent workouts (past 7 days):
+
+Tue: 2h endurance ride, 120 TSS; Wed: 45 min mobility; Thu: 4×6 min at threshold, 100 TSS; Fri: full-body strength (bench press, deadlift)…
+Total weekly TSS: 450, ATL 78, CTL 72, TSB −6.
+Subjective fatigue: 7/10; sleep quality: 8/10.
+
+Instructions: Based on the athlete’s current fatigue (TSB −6) and upcoming event, propose a training session for tomorrow. Include warm‑up, main set, and cool‑down for cycling, and suggest accessory strength exercises. Explain your rationale and adjust intensity if the athlete reports high fatigue.
+
+O backend formata esse prompt dinamicamente com dados reais do usuário e envia à API de IA. A resposta é então parseada e armazenada.
+
+9. Estrutura de Pastas (exemplo para projeto em Python/FastAPI)
+fitness-app/
+├── app/
+│   ├── main.py            # ponto de entrada (FastAPI instance)
+│   ├── routers/
+│   │   ├── auth.py        # rotas de autenticação e OAuth
+│   │   ├── workouts.py    # rotas de treinos (listar, criar, importar)
+│   │   ├── metrics.py     # rotas de métricas de saúde
+│   │   ├── ai.py          # rotas para requisições à IA
+│   │   └── recommendations.py  # rotas de recomendações
+│   ├── services/
+│   │   ├── strava_service.py    # client para API Strava
+│   │   ├── tp_service.py        # client para TrainingPeaks MCP
+│   │   ├── ai_service.py        # comunicação com o modelo de IA
+│   │   └── scheduler.py         # agendador de tarefas e rotinas
+│   ├── models/
+│   │   ├── database.py     # conexão ao banco (SQLAlchemy)
+│   │   ├── athlete.py      # modelos de dados
+│   │   ├── workout.py
+│   │   ├── strength.py
+│   │   ├── metric.py
+│   │   └── recommendation.py
+│   ├── utils/
+│   │   ├── calculations.py  # funções de CTL/ATL/TSB e TSS
+│   │   └── oauth.py         # helpers para fluxos OAuth
+│   └── config.py           # variáveis de ambiente, chaves, etc.
+├── scripts/
+│   ├── daily_update.py    # script para rotina diária de importação/geração
+│   └── routines.md        # instruções para configurar rotina no Claude Code
+├── requirements.txt
+├── README.md
+└── .env.example
+10. Roadmap (MVP e Evolução)
+Fase	Descrição
+Planejamento	Definir requisitos detalhados, escolher stack, configurar repositório e CI.
+MVP (1–2 meses)	1) Autenticar via Strava (Single Player); 2) Importar atividades; 3) Registrar musculação manual; 4) Calcular cargas (TSS, CTL/ATL/TSB); 5) Integrar com IA para gerar recomendação diária; 6) Armazenar e exibir dados em dashboard simples.
+Integração TrainingPeaks	Instalar e configurar trainingpeaks-mcp; criar cliente no backend; permitir listar/criar treinos no TP via servidor MCP.
+Automação com Routines	Criar rotina no Claude Code que roda diariamente: chama script de importação, envia dados para IA, grava recomendação e agenda treino no TP/Strava.
+Exportação & Sincronização	Implementar upload de treinos planejados para Strava; adicionar suporte a exportar para Google Calendar ou planilha.
+Integração Garmin	Se obtiver aprovação como empresa, adicionar endpoints para Garmin (Health API, Activity API) e unificar ingestão.
+Mobile App	Desenvolver versão React Native/Flutter para acompanhar treinos pelo celular.
+Multiusuário e Coaches	Permitir que treinadores gerenciem múltiplos atletas; implantar RBAC; ajustar escalabilidade e limites de API.
+Analytics avançados	Adicionar gráficos de evolução, comparações semanais/mensais, e integração com sensores de potência, HRV e sono.
+11. Próximos Passos Práticos
+Decidir stack definitiva (Python ou Node). Configurar repositório Git e CI/CD.
+Registrar aplicativo no Strava e implementar fluxo OAuth no backend.
+Criar banco de dados e migrar esquemas iniciais das tabelas de atletas, treinos e métricas.
+Implementar importação de atividades do Strava e página de visualização no frontend.
+Integrar com uma API de IA (OpenAI/Anthropic) usando chave de API e testar prompt de recomendação.
+Configurar trainingpeaks‑mcp localmente, autenticar com cookie e testar comandos básicos (listar treinos, logar peso).
+Criar script ou rotina diária que roda importações, cálculos de CTL/ATL/TSB e gera recomendação via IA; documentar o processo para usar no Claude Routines.
+Avaliar hospedagem: iniciar em ambiente de desenvolvimento local; depois hospedar backend em serviço gerenciado e banco de dados em RDS.
+Observação Final
+
+Devido às políticas restritas das APIs de Garmin e TrainingPeaks, recomenda‑se iniciar o projeto com a integração do Strava, registro manual de musculação e IA. A partir daí, você pode experimentar o trainingpeaks‑mcp para uso pessoal. Caso deseje um produto comercial, será necessário aplicar formalmente aos programas de desenvolvedor dessas plataformas e, possivelmente, utilizar serviços intermediários como Terra ou Open Wearables para unificar dados.

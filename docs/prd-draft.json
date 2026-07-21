@@ -1,0 +1,585 @@
+{
+  "epics": [
+    {
+      "id": "EP-01",
+      "name": "Infraestrutura e Setup",
+      "description": "Setup inicial do projeto: repositório, CI/CD, banco de dados, variáveis de ambiente, deploy base.",
+      "stories": [
+        {
+          "id": "US-001",
+          "epic_id": "EP-01",
+          "persona": "time de desenvolvimento",
+          "story": "Como desenvolvedor, quero um repositório estruturado com backend e frontend separados para organizar o desenvolvimento.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": [],
+          "acceptance_criteria": [
+            "Dado o repositório criado, quando clonar o projeto, então existem pastas /backend e /frontend com README de setup",
+            "Dado o ambiente de desenvolvimento, quando rodar os comandos de setup, então o projeto sobe localmente sem erros"
+          ]
+        },
+        {
+          "id": "US-002",
+          "epic_id": "EP-01",
+          "persona": "time de desenvolvimento",
+          "story": "Como desenvolvedor, quero banco de dados Supabase configurado com schema inicial para armazenar dados do produto.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-001"],
+          "acceptance_criteria": [
+            "Dado o Supabase configurado, quando aplicar as migrations, então todas as tabelas são criadas sem erro",
+            "Dado o banco criado, quando testar a conexão do backend, então retorna sucesso"
+          ]
+        },
+        {
+          "id": "US-003",
+          "epic_id": "EP-01",
+          "persona": "time de desenvolvimento",
+          "story": "Como desenvolvedor, quero deploy automático (backend no Railway/Render, frontend na Vercel) para publicar atualizações com agilidade.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-001", "US-002"],
+          "acceptance_criteria": [
+            "Dado um push na branch main, quando o CI/CD executar, então o backend e frontend são deployados automaticamente",
+            "Dado o deploy concluído, quando acessar a URL de produção, então o app responde corretamente"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-02",
+      "name": "Autenticação e LGPD",
+      "description": "Registro, login, controle de acesso por perfil (admin/cliente) e conformidade com LGPD para dados de saúde.",
+      "stories": [
+        {
+          "id": "US-004",
+          "epic_id": "EP-02",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero fazer login seguro com email e senha para acessar o painel de gestão.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-002"],
+          "acceptance_criteria": [
+            "Dado credenciais válidas, quando fazer login, então sou redirecionado ao dashboard admin",
+            "Dado credenciais inválidas, quando fazer login, então vejo mensagem de erro sem expor detalhes de segurança",
+            "Dado sessão expirada, quando tentar acessar rota protegida, então sou redirecionado ao login"
+          ]
+        },
+        {
+          "id": "US-005",
+          "epic_id": "EP-02",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero fazer login no app com email e senha para visualizar meus treinos.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-004"],
+          "acceptance_criteria": [
+            "Dado credenciais válidas, quando fazer login, então vejo meu plano de treino do dia",
+            "Dado perfil de cliente, quando tentar acessar o painel admin, então recebo erro 403",
+            "Dado primeiro acesso, quando o admin criar minha conta, então recebo email de boas-vindas com link para definir senha"
+          ]
+        },
+        {
+          "id": "US-006",
+          "epic_id": "EP-02",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero aceitar os termos de uso e política de privacidade (LGPD) para autorizar o uso dos meus dados de saúde.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-005"],
+          "acceptance_criteria": [
+            "Dado primeiro acesso, quando criar conta, então sou obrigado a aceitar os termos LGPD antes de prosseguir",
+            "Dado aceite registrado, quando solicitar meus dados, então o sistema consegue exportar ou deletar conforme LGPD",
+            "Dado dados de saúde armazenados, quando verificar o banco, então estão criptografados em repouso"
+          ]
+        },
+        {
+          "id": "US-007",
+          "epic_id": "EP-02",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero gerenciar o consentimento LGPD dos clientes para garantir conformidade legal.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-006"],
+          "acceptance_criteria": [
+            "Dado painel admin, quando visualizar um cliente, então consigo ver status do consentimento LGPD e data de aceite",
+            "Dado solicitação de exclusão de dados, quando o cliente pedir, então consigo executar exclusão completa em até 72h",
+            "Dado log de acessos, quando auditado, então há registro de quem acessou quais dados e quando"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-03",
+      "name": "Gestão de Clientes",
+      "description": "Cadastro completo de clientes, anamnese esportiva, objetivos, disponibilidade e conexão com plataformas externas.",
+      "stories": [
+        {
+          "id": "US-008",
+          "epic_id": "EP-03",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero cadastrar um novo cliente com dados pessoais e esportivos para o agente IA criar um plano personalizado.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-004"],
+          "acceptance_criteria": [
+            "Dado formulário de cadastro, quando preencher nome, email, data de nascimento, peso, altura e objetivo, então o cliente é criado com sucesso",
+            "Dado cliente criado, quando verificar, então ele recebe email de boas-vindas com instruções de acesso",
+            "Dado campos obrigatórios vazios, quando tentar salvar, então vejo erros de validação específicos por campo"
+          ]
+        },
+        {
+          "id": "US-009",
+          "epic_id": "EP-03",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero registrar a anamnese esportiva do cliente (histórico de lesões, nível de condicionamento, FTP, FC máxima) para que a IA crie planos seguros e eficazes.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-008"],
+          "acceptance_criteria": [
+            "Dado perfil do cliente, quando preencher anamnese, então consigo salvar: histórico de lesões, medicamentos, nível de condicionamento (iniciante/intermediário/avançado), FTP estimado, FC máxima, FC de repouso",
+            "Dado anamnese salva, quando a IA gerar plano, então ela utiliza esses dados como parâmetros",
+            "Dado dados médicos sensíveis, quando armazenados, então estão criptografados conforme LGPD"
+          ]
+        },
+        {
+          "id": "US-010",
+          "epic_id": "EP-03",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero definir disponibilidade semanal e objetivos do cliente para que a IA respeite a agenda real da pessoa.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-009"],
+          "acceptance_criteria": [
+            "Dado perfil do cliente, quando configurar disponibilidade, então consigo marcar dias e horários disponíveis por tipo de treino (ciclismo, musculação, corrida)",
+            "Dado objetivo definido (ex: perda de peso, ganho de performance, preparação para prova), quando IA gerar plano, então o objetivo é refletido na periodização",
+            "Dado mudança de disponibilidade, quando atualizar, então o próximo plano já considera a nova agenda"
+          ]
+        },
+        {
+          "id": "US-011",
+          "epic_id": "EP-03",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero listar e filtrar todos os clientes com indicadores de status para gerenciar a carteira de alunos.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-008"],
+          "acceptance_criteria": [
+            "Dado lista de clientes, quando acessar o painel, então vejo nome, último treino, TSB atual e status de integração",
+            "Dado busca por nome ou email, quando filtrar, então resultado aparece em menos de 1 segundo",
+            "Dado cliente sem treino há 3+ dias, quando visualizar lista, então ele aparece destacado com alerta"
+          ]
+        },
+        {
+          "id": "US-012",
+          "epic_id": "EP-03",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero conectar minha conta do Strava, Garmin ou TrainingPeaks para que o agente envie e receba meus treinos automaticamente.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-005"],
+          "acceptance_criteria": [
+            "Dado meu perfil, quando clicar em 'Conectar Strava/Garmin/TrainingPeaks', então sou redirecionado ao OAuth da plataforma",
+            "Dado autorização concluída, quando voltar ao app, então vejo status 'Conectado' com ícone da plataforma",
+            "Dado conexão ativa, quando a IA gerar um treino, então ele é enviado automaticamente à plataforma escolhida"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-04",
+      "name": "Agente IA Coach",
+      "description": "Núcleo do produto: agente especializado em medicina do esporte que gera, personaliza e adapta planos de treino usando LLM.",
+      "stories": [
+        {
+          "id": "US-013",
+          "epic_id": "EP-04",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero um agente IA com conhecimento profundo em medicina do esporte e ciclismo para gerar planos tecnicamente precisos.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "XL",
+          "depends_on": ["US-009", "US-010"],
+          "acceptance_criteria": [
+            "Dado perfil completo do cliente, quando solicitar geração de plano, então o agente retorna plano estruturado em JSON com sessões detalhadas",
+            "Dado plano gerado, quando verificar, então inclui: tipo de treino, duração, intensidade (zonas de potência/FC/RPE), descrição de cada bloco",
+            "Dado nível do cliente, quando gerar plano, então a progressão de carga respeita princípios de periodização (progressão gradual, semanas de recuperação)"
+          ]
+        },
+        {
+          "id": "US-014",
+          "epic_id": "EP-04",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero que o agente analise o TSB do cliente antes de gerar o treino do dia para evitar overtraining.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-013", "US-022"],
+          "acceptance_criteria": [
+            "Dado TSB < -20, quando gerar treino do dia, então o agente prescreve recuperação ou treino muito leve",
+            "Dado TSB entre -5 e +5, quando gerar treino, então intensidade moderada-alta é prescrita",
+            "Dado TSB > +10, quando gerar treino, então sessão de qualidade (threshold/VO2max) é recomendada",
+            "Dado decisão do agente, quando verificar, então há justificativa baseada nos dados de carga"
+          ]
+        },
+        {
+          "id": "US-015",
+          "epic_id": "EP-04",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero que o agente gere planos para ciclismo, musculação e corrida com estrutura específica para cada modalidade.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-013"],
+          "acceptance_criteria": [
+            "Dado treino de ciclismo, quando gerado, então inclui: aquecimento, bloco principal com targets em watts/% FTP/zonas FC, desaquecimento",
+            "Dado treino de musculação, quando gerado, então inclui: exercícios com séries, reps, carga (% 1RM ou RPE), tempo de descanso",
+            "Dado treino de corrida, quando gerado, então inclui: ritmo alvo (min/km), zonas de FC, tipo de sessão (longa, intervalado, regenerativo)",
+            "Dado dia de descanso prescrito, quando verificar plano, então há orientação de recuperação ativa ou mobilidade"
+          ]
+        },
+        {
+          "id": "US-016",
+          "epic_id": "EP-04",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero que o agente ajuste o plano após receber os dados do treino executado para adaptar a prescrição seguinte.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-013", "US-023"],
+          "acceptance_criteria": [
+            "Dado dados pós-treino recebidos, quando analisar, então o agente compara o realizado vs planejado",
+            "Dado desvio > 20% da carga planejada, quando detectado, então o próximo treino é reajustado proporcionalmente",
+            "Dado feedback do cliente (opcional), quando considerado, então o agente incorpora na adaptação",
+            "Dado ajuste realizado, quando verificar log, então há registro do motivo da alteração"
+          ]
+        },
+        {
+          "id": "US-017",
+          "epic_id": "EP-04",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero visualizar o raciocínio do agente IA ao gerar cada treino para entender e validar as decisões.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-013"],
+          "acceptance_criteria": [
+            "Dado plano gerado, quando verificar detalhes, então vejo o rationale do agente: métricas consideradas (CTL/ATL/TSB), motivo da intensidade escolhida",
+            "Dado histórico de planos, quando acessar um plano anterior, então o raciocínio do agente está preservado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-05",
+      "name": "Integrações Externas",
+      "description": "Conexão bidirecional com Strava, Garmin Connect e TrainingPeaks: envio de treinos planejados e recebimento de dados de execução.",
+      "stories": [
+        {
+          "id": "US-018",
+          "epic_id": "EP-05",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero enviar o treino planejado para o Strava do cliente para que ele execute pelo dispositivo que preferir.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-012", "US-015"],
+          "acceptance_criteria": [
+            "Dado treino gerado pela IA, quando enviar ao Strava, então aparece como 'Treino Planejado' na conta do cliente",
+            "Dado envio bem-sucedido, quando verificar status, então log registra timestamp e ID do treino no Strava",
+            "Dado falha no envio, quando ocorrer, então o sistema tenta novamente (retry 3x) e notifica o admin"
+          ]
+        },
+        {
+          "id": "US-019",
+          "epic_id": "EP-05",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero enviar o treino planejado para o Garmin Connect do cliente.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-012", "US-015"],
+          "acceptance_criteria": [
+            "Dado treino gerado, quando enviar ao Garmin, então aparece no Garmin Connect como workout estruturado",
+            "Dado workout estruturado enviado, quando o cliente sincronizar o relógio, então o treino aparece no dispositivo Garmin",
+            "Dado falha no envio, quando ocorrer, então retry automático e alerta ao admin"
+          ]
+        },
+        {
+          "id": "US-020",
+          "epic_id": "EP-05",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero enviar o treino planejado para o TrainingPeaks do cliente.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-012", "US-015"],
+          "acceptance_criteria": [
+            "Dado treino gerado, quando enviar ao TrainingPeaks, então aparece no calendário do cliente como workout planejado",
+            "Dado workout enviado, quando sincronizado, então estrutura de intervalos (targets, durações) está correta",
+            "Dado falha, quando ocorrer, então retry e alerta ao admin"
+          ]
+        },
+        {
+          "id": "US-021",
+          "epic_id": "EP-05",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero receber automaticamente os dados do treino executado das plataformas para alimentar o agente IA.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "XL",
+          "depends_on": ["US-018", "US-019", "US-020"],
+          "acceptance_criteria": [
+            "Dado treino concluído no Strava/Garmin/TrainingPeaks, quando sincronizado, então os dados chegam ao nosso sistema em até 30 minutos via webhook ou polling",
+            "Dado dados recebidos, quando processados, então incluem: duração real, distância, potência média/normalizada, FC média/máxima, TSS calculado",
+            "Dado dados importados, quando verificar banco, então o treino está vinculado ao cliente correto e à prescrição original"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-06",
+      "name": "Planos e Treinos",
+      "description": "Criação, visualização e histórico de planos de treino semanais e sessões diárias.",
+      "stories": [
+        {
+          "id": "US-022",
+          "epic_id": "EP-06",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero calcular CTL, ATL e TSB diariamente para cada cliente para mensurar carga de treino.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-021"],
+          "acceptance_criteria": [
+            "Dado histórico de treinos do cliente, quando calcular, então CTL usa média exponencial 42 dias e ATL usa 7 dias",
+            "Dado cálculo realizado, quando verificar banco, então há registro de CTL/ATL/TSB para cada data",
+            "Dado novo treino importado, quando processar, então métricas são recalculadas automaticamente"
+          ]
+        },
+        {
+          "id": "US-023",
+          "epic_id": "EP-06",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero visualizar meu treino do dia no app para saber o que fazer hoje.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-015"],
+          "acceptance_criteria": [
+            "Dado app mobile, quando abrir, então vejo o treino de hoje em destaque com tipo, duração e intensidade",
+            "Dado treino de ciclismo, quando visualizar, então vejo os blocos com watts alvo e duração de cada intervalo",
+            "Dado treino de musculação, quando visualizar, então vejo a lista de exercícios com séries, reps e carga",
+            "Dado dia de descanso, quando visualizar, então vejo mensagem de recuperação com orientações"
+          ]
+        },
+        {
+          "id": "US-024",
+          "epic_id": "EP-06",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero visualizar meu histórico de treinos e evolução para acompanhar meu progresso.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-023", "US-022"],
+          "acceptance_criteria": [
+            "Dado histórico, quando acessar, então vejo lista dos últimos 30 treinos com data, tipo e TSS",
+            "Dado gráfico de evolução, quando visualizar, então vejo CTL/ATL/TSB dos últimos 60 dias",
+            "Dado treino específico, quando clicar, então vejo detalhes completos: planejado vs executado"
+          ]
+        },
+        {
+          "id": "US-025",
+          "epic_id": "EP-06",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero visualizar o plano e histórico de treinos de qualquer cliente para acompanhar a evolução da carteira.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-024"],
+          "acceptance_criteria": [
+            "Dado perfil do cliente no painel admin, quando acessar, então vejo o mesmo histórico e gráficos visíveis ao cliente",
+            "Dado comparativo planejado vs executado, quando analisar, então vejo aderência ao plano em percentual",
+            "Dado alerta de carga elevada (TSB < -25), quando detectado, então admin é notificado para revisar o caso"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-07",
+      "name": "Automação Diária",
+      "description": "Pipeline automatizado que roda diariamente: importar dados das plataformas → recalcular carga → gerar treino → enviar às plataformas.",
+      "stories": [
+        {
+          "id": "US-026",
+          "epic_id": "EP-07",
+          "persona": "Agente IA Coach",
+          "story": "Como sistema, quero executar um job diário automático para cada cliente ativo sem necessidade de ação manual.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-016", "US-021", "US-022"],
+          "acceptance_criteria": [
+            "Dado job agendado (ex: 6h diariamente), quando executar, então para cada cliente ativo: importa treinos das últimas 24h, recalcula CTL/ATL/TSB, gera treino do dia seguinte, envia às plataformas conectadas",
+            "Dado job concluído, quando verificar logs, então há registro de sucesso/falha por cliente com timestamp",
+            "Dado falha no processamento de um cliente, quando ocorrer, então o erro é registrado sem interromper os demais clientes"
+          ]
+        },
+        {
+          "id": "US-027",
+          "epic_id": "EP-07",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero visualizar o log de execução do job diário para monitorar a saúde do sistema.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-026"],
+          "acceptance_criteria": [
+            "Dado painel admin, quando acessar logs, então vejo execuções dos últimos 7 dias com status (sucesso/erro) por cliente",
+            "Dado erro de integração, quando detectado, então aparece alerta no painel com descrição do problema",
+            "Dado job não executado no horário esperado, quando verificar, então há alerta de falha crítica"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-08",
+      "name": "Dashboard Admin",
+      "description": "Painel central do admin para monitorar todos os clientes, status de treinos e saúde do sistema.",
+      "stories": [
+        {
+          "id": "US-028",
+          "epic_id": "EP-08",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero um dashboard com visão consolidada de todos os clientes para gerenciar minha carteira de alunos eficientemente.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-011", "US-025"],
+          "acceptance_criteria": [
+            "Dado dashboard, quando acessar, então vejo cards por cliente com: nome, treino de hoje, TSB atual, status de integração (conectado/desconectado), último treino executado",
+            "Dado cliente com treino pendente para hoje, quando visualizar, então aparece indicador visual de status",
+            "Dado dashboard, quando usar no celular, então layout é responsivo e usável"
+          ]
+        },
+        {
+          "id": "US-029",
+          "epic_id": "EP-08",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero receber alertas automáticos de situações críticas dos clientes para agir rapidamente.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-028"],
+          "acceptance_criteria": [
+            "Dado TSB de cliente < -25 (sobretreinamento), quando detectado, então admin recebe alerta no app",
+            "Dado falha de integração (Strava/Garmin/TrainingPeaks) por 24h, quando detectada, então admin é alertado",
+            "Dado cliente sem treino registrado há 5+ dias, quando detectado, então admin recebe aviso"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-09",
+      "name": "App Mobile Cliente",
+      "description": "Interface mobile-first para o cliente visualizar seus treinos, histórico e métricas de evolução.",
+      "stories": [
+        {
+          "id": "US-030",
+          "epic_id": "EP-09",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero um app mobile responsivo para acessar meus treinos de qualquer dispositivo.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-023"],
+          "acceptance_criteria": [
+            "Dado acesso via smartphone, quando abrir o app, então layout se adapta perfeitamente a telas de 360px+",
+            "Dado app PWA, quando instalar no celular, então funciona offline para visualizar o treino do dia",
+            "Dado carregamento, quando acessar o treino do dia, então página carrega em menos de 2 segundos em 4G"
+          ]
+        },
+        {
+          "id": "US-031",
+          "epic_id": "EP-09",
+          "persona": "Cliente Atleta",
+          "story": "Como cliente, quero fornecer feedback opcional após o treino para ajudar o agente IA a melhorar as prescrições.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "S",
+          "depends_on": ["US-023"],
+          "acceptance_criteria": [
+            "Dado treino do dia, quando concluir, então vejo opção de feedback com campos: como se sentiu (1-10), observações livres",
+            "Dado feedback enviado, quando processado, então o agente considera na geração do próximo treino",
+            "Dado feedback não enviado, quando não interagir, então o sistema funciona normalmente sem feedback"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EP-10",
+      "name": "Sistema de Assinaturas",
+      "description": "Gestão de planos de assinatura para acesso dos clientes à plataforma.",
+      "stories": [
+        {
+          "id": "US-032",
+          "epic_id": "EP-10",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero gerenciar assinaturas dos clientes (ativar, suspender, cancelar) para controlar o acesso à plataforma.",
+          "priority": "Must",
+          "scope": "MVP",
+          "complexity": "M",
+          "depends_on": ["US-008"],
+          "acceptance_criteria": [
+            "Dado painel admin, quando gerenciar assinaturas, então consigo ativar, suspender ou cancelar o acesso de cada cliente",
+            "Dado assinatura suspensa, quando cliente tentar acessar, então vejo mensagem de conta inativa",
+            "Dado histórico de assinaturas, quando verificar, então vejo datas de início, suspensão e cancelamento"
+          ]
+        },
+        {
+          "id": "US-033",
+          "epic_id": "EP-10",
+          "persona": "Dr. Admin",
+          "story": "Como admin, quero integração com gateway de pagamento (Stripe) para automatizar cobranças das assinaturas.",
+          "priority": "Should",
+          "scope": "MVP",
+          "complexity": "L",
+          "depends_on": ["US-032"],
+          "acceptance_criteria": [
+            "Dado cliente com assinatura ativa, quando chegar data de renovação, então cobrança é processada automaticamente via Stripe",
+            "Dado cobrança recusada, quando ocorrer, então admin e cliente são notificados e acesso é suspenso após 3 dias",
+            "Dado painel financeiro, quando acessar, então vejo receita mensal, clientes ativos e inadimplentes"
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_stories": 33,
+    "mvp_stories": 33,
+    "post_mvp_stories": 0,
+    "epics_count": 10,
+    "must_stories": 25,
+    "should_stories": 8,
+    "complexity_breakdown": {
+      "S": 7,
+      "M": 12,
+      "L": 10,
+      "XL": 4
+    },
+    "total_complexity_days_estimate": "90-130 dias",
+    "critical_path": ["US-002", "US-013", "US-015", "US-021", "US-022", "US-026"]
+  }
+}

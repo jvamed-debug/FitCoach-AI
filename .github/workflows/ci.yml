@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend: lint + tests ────────────────────────────────────────────────────
+  backend:
+    name: Backend (Python)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # Minimal env for tests (SQLite in-memory, no real services)
+      SUPABASE_URL: https://placeholder.supabase.co
+      SUPABASE_ANON_KEY: placeholder
+      SUPABASE_SERVICE_KEY: placeholder
+      SUPABASE_JWT_SECRET: test-jwt-secret-min-32-chars-here!!
+      DATABASE_URL: sqlite+aiosqlite:///:memory:
+      DB_ENCRYPTION_KEY: test-encryption-key-32chars-exactly!
+      SECRET_KEY: test-secret-key-minimum-32-chars!!
+      ANTHROPIC_API_KEY: sk-ant-placeholder
+      OPENAI_API_KEY: sk-placeholder
+      RESEND_API_KEY: re_placeholder
+      STRAVA_CLIENT_ID: "0"
+      STRAVA_CLIENT_SECRET: placeholder
+      STRAVA_WEBHOOK_VERIFY_TOKEN: placeholder
+      VAPID_PRIVATE_KEY: ""
+      VAPID_PUBLIC_KEY: ""
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+      STRIPE_PRICE_STARTER: price_placeholder
+      STRIPE_PRICE_PRO: price_placeholder
+      STRIPE_PRICE_ELITE: price_placeholder
+      APP_ENV: development
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:8000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint with ruff (if available)
+        run: pip install ruff && ruff check app/ --select=E,W,F --ignore=E501 || true
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
+
+  # ── Frontend: type-check ─────────────────────────────────────────────────────
+  frontend:
+    name: Frontend (TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint || true

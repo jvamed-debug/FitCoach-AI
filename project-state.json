@@ -1,0 +1,117 @@
+{
+  "project_id": "projeto-20260429",
+  "project_name": "FitCoach AI",
+  "goal": "Plataforma de coaching esportivo com agente IA especializado em medicina do esporte que cria, envia e adapta planos de treino diários de forma totalmente automatizada, integrada a Strava, Garmin, TrainingPeaks e Apple Health.",
+  "current_stage": "ready-to-code",
+  "completed_stages": ["discovery", "prd-generator", "prd-validator", "prd-complete", "tech-decisions", "spec-generation", "spec-enricher", "planner", "sprint-validator"],
+  "mvp_scope": [
+    "US-001", "US-002", "US-003",
+    "US-004", "US-005", "US-006", "US-007",
+    "US-008", "US-009", "US-010", "US-011", "US-012",
+    "US-013", "US-014", "US-015", "US-016", "US-017",
+    "US-018", "US-019", "US-020", "US-021", "US-021b",
+    "US-022", "US-023", "US-024", "US-025",
+    "US-026", "US-027",
+    "US-028", "US-029",
+    "US-030", "US-031",
+    "US-032", "US-033",
+    "US-034", "US-035",
+    "US-036", "US-037", "US-038"
+  ],
+  "post_mvp_scope": [
+    "Apple Watch nativo (watchOS)",
+    "App nativo iOS/Android (React Native)",
+    "Suporte internacional e múltiplos idiomas",
+    "Marketplace de planos de treino",
+    "Planos de nutrição detalhados com diário alimentar",
+    "Telemedicina integrada",
+    "Multi-tenancy para academias e clubes"
+  ],
+  "tech_stack": {
+    "backend": "Python 3.11 + FastAPI + Pydantic v2 + SQLAlchemy 2.0 + APScheduler + WeasyPrint + Resend",
+    "frontend": "Next.js 14 + TypeScript + Tailwind + shadcn/ui + Recharts + Zustand + next-pwa",
+    "database": "Supabase PostgreSQL + pgcrypto + RLS",
+    "auth": "Supabase Auth + JWT + OAuth 2.0",
+    "ai_primary": "Claude API (claude-sonnet-4-6)",
+    "ai_fallback": "OpenAI GPT-4o",
+    "integrations": ["Strava API v3 + Webhooks", "Garmin (relay via Strava+TrainingPeaks bidirecional)", "TrainingPeaks API", "Apple Health (iOS Shortcut webhook)"],
+    "payments": "Stripe",
+    "deploy_backend": "Railway",
+    "deploy_frontend": "Vercel",
+    "cicd": "GitHub Actions",
+    "storage": "Supabase Storage"
+  },
+  "artifacts": {
+    "discovery": {
+      "file": "docs/discovery.json"
+    },
+    "prd_draft": {
+      "file": "docs/prd-draft.json",
+      "total_stories": 33,
+      "epics": 10
+    },
+    "prd_validated": {
+      "file": "docs/prd-validated.json",
+      "total_stories": 38,
+      "epics": 12
+    },
+    "prd_final": {
+      "file": "docs/PRD.md",
+      "total_stories": 38,
+      "epics": 12,
+      "nfrs": 16,
+      "estimate": "110-150 dias"
+    },
+    "tech_decisions": { "file": "docs/tech-decisions.md", "confirmed_at": "2026-04-30" },
+    "spec_v1": { "file": "docs/spec-v1.md", "generated_at": "2026-04-30", "sections": ["data-model", "api-contracts", "ui-states", "integration-flows", "daily-job"] },
+    "spec_enriched": { "file": "docs/spec-enriched.md", "generated_at": "2026-04-30", "sections": 10 },
+    "sprint_plan": { "file": "docs/sprint-plan.md", "generated_at": "2026-04-30", "total_sprints": 12, "total_days": 120 },
+    "sprint_plan_validated": { "file": "docs/sprint-plan-validated.md", "validated_at": "2026-04-30", "issues_found": 12, "issues_critical": 2, "total_days_revised": 127 },
+    "current_sprint": 0,
+    "total_sprints": 12,
+    "evaluations": [],
+    "acceptance_report": null
+  },
+  "human_checkpoints_done": ["prd-validator", "tech-decisions"],
+  "decisions_log": [
+    {
+      "date": "2026-04-29",
+      "decision": "Escopo mobile-first (PWA) confirmado",
+      "reason": "Cliente acessa principalmente pelo celular; app nativo é pós-MVP"
+    },
+    {
+      "date": "2026-04-29",
+      "decision": "LGPD é requisito primordial",
+      "reason": "Dados de saúde de atletas — médico como admin; dados sensíveis por lei"
+    },
+    {
+      "date": "2026-04-29",
+      "decision": "Automação total sem ação do cliente",
+      "reason": "Core do produto — treino enviado e ajustado automaticamente é o diferencial"
+    },
+    {
+      "date": "2026-04-30",
+      "decision": "Natação, Triathlon, Apple Health, Nutrição e Relatórios movidos para MVP",
+      "reason": "Confirmado pelo usuário como essencial para o produto completo"
+    },
+    {
+      "date": "2026-04-30",
+      "decision": "Apple Health via iOS Shortcut (webhook) no MVP",
+      "reason": "Sem app nativo iOS no MVP; Shortcut gerado pelo sistema com URL de webhook única por cliente"
+    },
+    {
+      "date": "2026-04-30",
+      "decision": "Garmin bidirecional via relay: inbound=Garmin→Strava→FitCoach, outbound=FitCoach→TrainingPeaks→Garmin",
+      "reason": "API Garmin aguarda aprovação; relay via Strava+TrainingPeaks cobre ambas as direções até lá"
+    },
+    {
+      "date": "2026-04-30",
+      "decision": "Modelo IA: claude-sonnet-4-6 (principal) + GPT-4o (fallback automático)",
+      "reason": "Sonnet tem custo/performance ideal para geração diária; fallback garante NFR-14 (uptime 99,5%)"
+    }
+  ],
+  "issues_log": [],
+  "created_at": "2026-04-29",
+  "last_updated": "2026-04-30",
+  "session_count": 1
+}

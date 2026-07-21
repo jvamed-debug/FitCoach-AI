@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(tar -xzf \"C:\\\\Users\\\\jvame\\\\OneDrive\\\\app\\\\Gestor de projetos\\\\files\\\\multiagente-pipeline.tar.gz\" -C \"C:\\\\Users\\\\jvame\\\\OneDrive\\\\app\\\\Educador Fisico\")",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(git ls-remote *)",
+      "Bash(ssh-keygen -F github.com)",
+      "Bash(git config *)"
+    ]
+  }
+}

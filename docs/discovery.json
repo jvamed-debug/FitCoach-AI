@@ -1,0 +1,105 @@
+{
+  "project_name": "FitCoach AI",
+  "goal": "Plataforma de coaching esportivo com agente IA especializado em medicina do esporte que cria, envia e adapta planos de treino diários de forma totalmente automatizada, integrada a Strava, Garmin e TrainingPeaks.",
+  "problem": "Médico sem expertise em educação física precisa de uma solução que crie planos de treino integrados (ciclismo, musculação, corrida) com conhecimento profundo de fisiologia do esporte, e que os gerencie automaticamente para múltiplos clientes sem depender da ação deles.",
+  "current_solution": "Pagamento de educador físico presencial sem conhecimento em ciclismo, sem automação e sem integração com plataformas esportivas.",
+  "why_insufficient": "O profissional atual não domina ciclismo, não personaliza baseado em dados de performance real, não adapta o treino automaticamente e exige gestão manual constante.",
+  "personas": [
+    {
+      "name": "Dr. Admin",
+      "role": "Médico administrador da plataforma",
+      "main_actions": [
+        "Cadastrar e gerenciar clientes",
+        "Definir objetivos e parâmetros iniciais de cada cliente",
+        "Acompanhar dashboard geral de todos os clientes",
+        "Gerenciar assinaturas",
+        "Visualizar relatórios de evolução"
+      ],
+      "permissions": "admin"
+    },
+    {
+      "name": "Agente IA Coach",
+      "role": "Agente especializado em medicina do esporte e educação física",
+      "main_actions": [
+        "Gerar plano de treino personalizado baseado em perfil, objetivo e disponibilidade",
+        "Enviar treino do dia para Strava, Garmin ou TrainingPeaks",
+        "Receber dados pós-treino das plataformas automaticamente",
+        "Analisar performance e feedback",
+        "Ajustar e gerar o próximo treino diariamente",
+        "Calcular CTL/ATL/TSB e métricas de carga"
+      ],
+      "permissions": "system"
+    },
+    {
+      "name": "Cliente Atleta",
+      "role": "Atleta que recebe e executa os treinos",
+      "main_actions": [
+        "Visualizar plano de treino do dia no app",
+        "Ver histórico de treinos e evolução",
+        "Escolher plataforma preferida (Strava, Garmin ou TrainingPeaks)",
+        "Fornecer feedback subjetivo quando desejar (opcional)"
+      ],
+      "permissions": "viewer"
+    }
+  ],
+  "mvp_features": [
+    "Cadastro completo de clientes (perfil, anamnese básica, nível de condicionamento, objetivos, disponibilidade semanal)",
+    "Agente IA que gera plano de treino semanal e diário personalizado (ciclismo, musculação, corrida)",
+    "Integração bidirecional com Strava (envio de treino planejado + recebimento pós-treino)",
+    "Integração bidirecional com Garmin Connect (envio de treino planejado + recebimento pós-treino)",
+    "Integração bidirecional com TrainingPeaks (envio de treino planejado + recebimento pós-treino)",
+    "Automação diária: receber dados do treino concluído → analisar → gerar treino do dia seguinte",
+    "Dashboard admin com visão de todos os clientes e status de treino",
+    "Visualização do plano de treino pelo cliente no app mobile",
+    "Cálculo automático de métricas de carga (CTL/ATL/TSB, TSS)",
+    "Sistema de assinatura para acesso dos clientes",
+    "Conformidade com LGPD (consentimento, criptografia de dados de saúde, anonimização)"
+  ],
+  "post_mvp_features": [
+    "Outros esportes (natação, triathlon, etc.)",
+    "Integração com Apple Watch / Apple Health",
+    "Análise de composição corporal",
+    "Suporte a outros países e idiomas",
+    "Notificações push e lembretes de treino",
+    "Planos de nutrição integrados",
+    "Relatórios médicos exportáveis",
+    "Marketplace de planos de treino"
+  ],
+  "external_integrations": [
+    "Strava API v3 (OAuth 2.0, bidirecional)",
+    "Garmin Connect API (OAuth 2.0, bidirecional)",
+    "TrainingPeaks API (OAuth 2.0, bidirecional)",
+    "Anthropic Claude API (agente IA principal)",
+    "Gateway de pagamento para assinaturas (Stripe ou similar)",
+    "Supabase Auth + Database"
+  ],
+  "excluded_from_scope": [
+    "Suporte a países fora do Brasil no MVP",
+    "Outros idiomas além do português no MVP",
+    "Planos de nutrição no MVP",
+    "Integração com Apple Health no MVP",
+    "Atendimento de telemedicina dentro do app"
+  ],
+  "constraints": {
+    "stack_preference": "A definir na fase tech-decisions (otimizada para o produto)",
+    "deadline": "Não definido — MVP o mais rápido possível",
+    "team_size": "1 desenvolvedor (com suporte de IA)",
+    "compliance": ["LGPD — primordial, dados de saúde criptografados"],
+    "budget": "Não definido",
+    "target_devices": "Mobile-first (iOS e Android via web responsivo ou PWA)"
+  },
+  "success_criteria": [
+    "Cadastrar cliente → IA gera plano → treino enviado para Garmin/TrainingPeaks/Strava → dados pós-treino recebidos automaticamente → próximo treino ajustado — tudo sem ação manual do cliente",
+    "App funciona corretamente no celular",
+    "Múltiplos clientes gerenciados simultaneamente",
+    "Planos gerados com base nos protocolos mais recentes de medicina do esporte",
+    "Sistema de assinatura funcionando"
+  ],
+  "acceptance_criteria": [
+    "Fluxo completo de automação funcionando de ponta a ponta (cadastro → plano → envio → recebimento → ajuste)",
+    "Integração com pelo menos uma plataforma (Strava, Garmin ou TrainingPeaks) funcionando em produção",
+    "Dados de saúde protegidos conforme LGPD",
+    "Interface funcional e responsiva no celular",
+    "Admin consegue gerenciar pelo menos 10 clientes simultaneamente"
+  ]
+}
