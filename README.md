@@ -4,6 +4,16 @@ Plataforma de coaching esportivo com agente IA para educadores físicos e treina
 
 **Stack:** FastAPI + SQLAlchemy async + Supabase PostgreSQL + Next.js 14 + shadcn/ui
 
+> ⚠️ Software proprietário — © Junior Aredes, todos os direitos reservados. Ver [LICENSE](LICENSE).
+
+## Documentação do projeto
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [SECURITY.md](SECURITY.md) | Modelo de ameaças, fronteiras de confiança, requisitos de produção |
+| [OPERATIONS.md](OPERATIONS.md) | Runbook: deploy, diagnóstico, backup, rotação de segredos, rollback |
+| [AGENTS.md](AGENTS.md) | Convenções de código e regras de negócio para quem contribui |
+
 ---
 
 ## Início Rápido (desenvolvimento local)
