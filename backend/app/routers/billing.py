@@ -143,46 +143,69 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     event_id = event["id"]
     event_type = event["type"]
 
-    # Idempotency check — skip if already processed
+    # Idempotency — reuse any existing record for this event (there is no unique
+    # index on event_id, so we must look it up rather than blindly re-insert).
     existing = await db.execute(
         select(WebhookEvent).where(
             WebhookEvent.provider == "stripe",
             WebhookEvent.event_id == event_id,
-            WebhookEvent.processed_at != None,
         )
     )
-    if existing.scalar_one_or_none():
+    webhook_record = existing.scalar_one_or_none()
+    if webhook_record and webhook_record.processed_at is not None:
         logger.info("Stripe webhook %s already processed — skipping", event_id)
         return
 
-    # Record the event
-    webhook_record = WebhookEvent(
-        provider="stripe",
-        event_id=event_id,
-        event_type=event_type,
-        payload=event.to_dict(),
-    )
-    db.add(webhook_record)
-    await db.flush()
+    # Durably record receipt BEFORE processing, so a failed handler still leaves
+    # a trace and a later Stripe retry finds (does not duplicate) this record.
+    if webhook_record is None:
+        webhook_record = WebhookEvent(
+            provider="stripe",
+            event_id=event_id,
+            event_type=event_type,
+            payload=event.to_dict(),
+        )
+        db.add(webhook_record)
+        await db.commit()
 
-    try:
-        handlers = {
-            "checkout.session.completed":       handle_checkout_completed,
-            "invoice.paid":                     handle_invoice_paid,
-            "customer.subscription.updated":    handle_subscription_updated,
-            "customer.subscription.deleted":    handle_subscription_deleted,
-            "invoice.payment_failed":           handle_payment_failed,
-        }
-        handler = handlers.get(event_type)
-        if handler:
+    handlers = {
+        "checkout.session.completed":       handle_checkout_completed,
+        "invoice.paid":                     handle_invoice_paid,
+        "customer.subscription.updated":    handle_subscription_updated,
+        "customer.subscription.deleted":    handle_subscription_deleted,
+        "invoice.payment_failed":           handle_payment_failed,
+    }
+    handler = handlers.get(event_type)
+    if handler:
+        try:
             await handler(db, event["data"])
-            logger.info("Handled Stripe event %s (%s)", event_type, event_id)
-        else:
-            logger.debug("Unhandled Stripe event type: %s", event_type)
+        except Exception as exc:
+            # Discard the handler's partial writes, record the error, and return
+            # 5xx so Stripe RETRIES the event instead of dropping it silently
+            # (a 2xx tells Stripe the event is done — the payment/subscription
+            # would then desync forever). rollback() expires ORM objects, so we
+            # reload the record explicitly before touching it (avoids async IO
+            # on an expired attribute).
+            await db.rollback()
+            reload = await db.execute(
+                select(WebhookEvent).where(
+                    WebhookEvent.provider == "stripe",
+                    WebhookEvent.event_id == event_id,
+                )
+            )
+            rec = reload.scalar_one_or_none()
+            if rec is not None:
+                rec.error = str(exc)
+                await db.commit()
+            logger.exception("Error processing Stripe event %s: %s", event_id, exc)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Webhook handler failed; Stripe will retry",
+            )
+        logger.info("Handled Stripe event %s (%s)", event_type, event_id)
+    else:
+        logger.debug("Unhandled Stripe event type: %s", event_type)
 
-        webhook_record.processed_at = datetime.now(timezone.utc)
-    except Exception as exc:
-        webhook_record.error = str(exc)
-        logger.exception("Error processing Stripe event %s: %s", event_id, exc)
-
+    webhook_record.processed_at = datetime.now(timezone.utc)
+    webhook_record.error = None
     await db.commit()

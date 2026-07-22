@@ -452,12 +452,14 @@ def generate_default_nutrition(weight_kg: float | None, workout_type: str) -> di
 class AIService:
     def __init__(self, provider: AIProvider | None = None):
         self.provider = provider or AIProvider(settings.default_ai_provider)
-        self._anthropic = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        self._openai    = openai.OpenAI(api_key=settings.openai_api_key)
+        # Async clients: the sync SDK clients do blocking network I/O, which would
+        # freeze the whole event loop for the multi-second duration of an AI call.
+        self._anthropic = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        self._openai    = openai.AsyncOpenAI(api_key=settings.openai_api_key)
 
     async def _call_anthropic(self, user_message: str) -> tuple[str, int]:
         """Returns (raw_response_text, tokens_used)."""
-        response = self._anthropic.messages.create(
+        response = await self._anthropic.messages.create(
             model=settings.anthropic_model,
             max_tokens=2048,
             temperature=0.3,
@@ -470,7 +472,7 @@ class AIService:
 
     async def _call_openai(self, user_message: str) -> tuple[str, int]:
         """Returns (raw_response_text, tokens_used)."""
-        response = self._openai.chat.completions.create(
+        response = await self._openai.chat.completions.create(
             model=settings.openai_model,
             temperature=0.3,
             max_tokens=2048,
