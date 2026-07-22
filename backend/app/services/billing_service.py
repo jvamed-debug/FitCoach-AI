@@ -18,6 +18,7 @@ Flows:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -133,7 +134,8 @@ async def create_checkout_session(
     if sub.stripe_customer_id:
         customer_id = sub.stripe_customer_id
     else:
-        customer = stripe.Customer.create(
+        customer = await asyncio.to_thread(
+            stripe.Customer.create,
             email=admin.email,
             name=admin.name,
             metadata={"admin_id": str(admin.id)},
@@ -142,7 +144,8 @@ async def create_checkout_session(
         sub.stripe_customer_id = customer_id
         await db.commit()
 
-    session = stripe.checkout.Session.create(
+    session = await asyncio.to_thread(
+        stripe.checkout.Session.create,
         customer=customer_id,
         payment_method_types=["card"],
         line_items=[{"price": plan_info["stripe_price_id"], "quantity": 1}],
@@ -165,7 +168,8 @@ async def create_portal_session(db: AsyncSession, admin_id: str) -> str:
     if not sub.stripe_customer_id:
         raise ValueError("No Stripe customer associated with this admin")
 
-    session = stripe.billing_portal.Session.create(
+    session = await asyncio.to_thread(
+        stripe.billing_portal.Session.create,
         customer=sub.stripe_customer_id,
         return_url=f"{settings.frontend_url}/billing",
     )
@@ -190,7 +194,7 @@ async def handle_checkout_completed(db: AsyncSession, event_data: dict) -> None:
     period_end = None
     if stripe_sub_id:
         try:
-            stripe_sub = stripe.Subscription.retrieve(stripe_sub_id)
+            stripe_sub = await asyncio.to_thread(stripe.Subscription.retrieve, stripe_sub_id)
             period_end = datetime.fromtimestamp(stripe_sub["current_period_end"], tz=timezone.utc)
         except Exception as exc:
             logger.warning("Could not fetch Stripe subscription %s: %s", stripe_sub_id, exc)
@@ -229,7 +233,7 @@ async def handle_invoice_paid(db: AsyncSession, event_data: dict) -> None:
 
     # Fetch updated period from Stripe
     try:
-        stripe_sub = stripe.Subscription.retrieve(stripe_sub_id)
+        stripe_sub = await asyncio.to_thread(stripe.Subscription.retrieve, stripe_sub_id)
         sub.current_period_end = datetime.fromtimestamp(
             stripe_sub["current_period_end"], tz=timezone.utc
         )

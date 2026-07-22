@@ -154,8 +154,8 @@ async def generate_weekly_report(db: AsyncSession, athlete_id: str, today: date)
     )
 
     try:
-        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-        response = client.messages.create(
+        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        response = await client.messages.create(
             model=settings.anthropic_model,
             max_tokens=1024,
             temperature=0.4,
