@@ -1,8 +1,12 @@
 name: Deploy
 
+# Deploy manual até os secrets (RAILWAY_TOKEN, VERCEL_TOKEN, VERCEL_ORG_ID,
+# VERCEL_PROJECT_ID) estarem configurados em Settings → Secrets and variables.
+# Para reativar o deploy automático, substitua "workflow_dispatch:" abaixo por:
+#   push:
+#     branches: [main]
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   # ── CI must pass before deploy ────────────────────────────────────────────────

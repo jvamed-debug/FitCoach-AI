@@ -40,7 +40,7 @@ jobs:
       SUPABASE_ANON_KEY: placeholder
       SUPABASE_SERVICE_KEY: placeholder
       SUPABASE_JWT_SECRET: test-jwt-secret-min-32-chars-here!!
-      DATABASE_URL: sqlite+aiosqlite:///:memory:
+      DATABASE_URL: "sqlite+aiosqlite:///:memory:"
       DB_ENCRYPTION_KEY: test-encryption-key-32chars-exactly!
       SECRET_KEY: test-secret-key-minimum-32-chars!!
       ANTHROPIC_API_KEY: sk-ant-placeholder
