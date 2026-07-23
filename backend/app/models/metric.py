@@ -1,15 +1,14 @@
 from sqlalchemy import Column, Integer, Numeric, DateTime, ForeignKey, Text, String, Date
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, GUID
 
 
 class DailyMetric(Base):
     __tablename__ = "daily_metrics"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    athlete_id = Column(UUID(as_uuid=True), ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    athlete_id = Column(GUID, ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
     metric_date = Column(Date, nullable=False)
     weight_kg = Column(Numeric(5, 2))
     sleep_hours = Column(Numeric(4, 2))

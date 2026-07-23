@@ -1,15 +1,14 @@
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
-from app.database import Base, JSONVariant
+from app.database import Base, GUID, JSONVariant
 
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    admin_id = Column(UUID(as_uuid=True), ForeignKey("admin_users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    admin_id = Column(GUID, ForeignKey("admin_users.id", ondelete="CASCADE"), nullable=False, unique=True)
     stripe_subscription_id = Column(String(255), unique=True)
     stripe_customer_id = Column(String(255))
     # 'starter' | 'pro' | 'elite' | 'trial'
@@ -26,7 +25,7 @@ class Subscription(Base):
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     provider = Column(String(50), nullable=False)
     event_id = Column(String(255), nullable=False)
     event_type = Column(String(100))

@@ -221,9 +221,10 @@ async def test_require_lgpd_consent_blocks_without_consent(client: AsyncClient, 
     """
     from fastapi import Depends
     from app.dependencies import require_lgpd_consent
+    from app.main import app
 
     # Add a temporary test route
-    @client.app.get("/test/lgpd-guarded", include_in_schema=False)
+    @app.get("/test/lgpd-guarded", include_in_schema=False)
     async def _guarded(a: Athlete = Depends(require_lgpd_consent)):
         return {"ok": True}
 
@@ -238,8 +239,9 @@ async def test_require_lgpd_consent_blocks_without_consent(client: AsyncClient, 
 async def test_require_lgpd_consent_passes_with_consent(client: AsyncClient, athlete_with_consent: Athlete):
     from fastapi import Depends
     from app.dependencies import require_lgpd_consent
+    from app.main import app
 
-    @client.app.get("/test/lgpd-guarded-ok", include_in_schema=False)
+    @app.get("/test/lgpd-guarded-ok", include_in_schema=False)
     async def _guarded_ok(a: Athlete = Depends(require_lgpd_consent)):
         return {"ok": True}
 

@@ -1,16 +1,15 @@
 from sqlalchemy import Column, String, Integer, Numeric, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-from app.database import Base, JSONVariant
+from app.database import Base, GUID, JSONVariant
 
 
 class Workout(Base):
     __tablename__ = "workouts"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    athlete_id = Column(UUID(as_uuid=True), ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    athlete_id = Column(GUID, ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
     external_id = Column(String(255))
     source = Column(String(50), nullable=False)
     sport_type = Column(String(50), nullable=False)

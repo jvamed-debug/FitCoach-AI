@@ -1,16 +1,15 @@
 from sqlalchemy import Column, String, Integer, Numeric, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, GUID
 
 
 class StrengthSession(Base):
     __tablename__ = "strength_sessions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    athlete_id = Column(UUID(as_uuid=True), ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    athlete_id = Column(GUID, ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
     session_date = Column(DateTime(timezone=True), nullable=False)
     session_type = Column(String(50))
     duration_minutes = Column(Integer)
@@ -25,8 +24,8 @@ class StrengthSession(Base):
 class StrengthExercise(Base):
     __tablename__ = "strength_exercises"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("strength_sessions.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    session_id = Column(GUID, ForeignKey("strength_sessions.id", ondelete="CASCADE"), nullable=False)
     exercise_name = Column(String(255), nullable=False)
     sets = Column(Integer, nullable=False)
     reps = Column(Integer)

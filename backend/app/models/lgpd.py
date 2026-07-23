@@ -1,16 +1,15 @@
 from sqlalchemy import Column, String, Boolean, DateTime, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, INET
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, GUID
 
 
 class LGPDConsent(Base):
     __tablename__ = "lgpd_consents"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    athlete_id = Column(UUID(as_uuid=True), ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    athlete_id = Column(GUID, ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
     consent_version = Column(String(20), nullable=False)
     consented_at = Column(DateTime(timezone=True), nullable=False)
     ip_address = Column(String(45))
@@ -24,12 +23,12 @@ class LGPDConsent(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    actor_id = Column(UUID(as_uuid=True), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    actor_id = Column(GUID, nullable=False)
     actor_type = Column(String(20), nullable=False)  # 'admin' | 'athlete' | 'system'
     action = Column(String(100), nullable=False)
     resource_type = Column(String(50), nullable=False)
-    resource_id = Column(UUID(as_uuid=True))
+    resource_id = Column(GUID)
     ip_address = Column(String(45))
     metadata_ = Column("metadata", String)  # JSONB stored as text for flexibility
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
@@ -38,8 +37,8 @@ class AuditLog(Base):
 class LGPDDeletionRequest(Base):
     __tablename__ = "lgpd_deletion_requests"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    athlete_id = Column(UUID(as_uuid=True), ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    athlete_id = Column(GUID, ForeignKey("athletes.id", ondelete="CASCADE"), nullable=False)
     requested_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     deadline = Column(DateTime(timezone=True), nullable=False)
     executed_at = Column(DateTime(timezone=True))
