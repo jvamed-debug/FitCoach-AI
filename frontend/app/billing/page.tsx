@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
@@ -26,7 +26,19 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+// useSearchParams() força bailout para renderização no cliente e, no App Router,
+// precisa estar sob um limite de Suspense — sem isso o `next build` falha ao
+// pré-renderizar /billing (é a página de retorno do checkout do Stripe, que lê
+// ?success=1 / ?canceled=1).
 export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-gray-400">Carregando…</div>}>
+      <BillingPageContent />
+    </Suspense>
+  );
+}
+
+function BillingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { role } = useAuthStore();

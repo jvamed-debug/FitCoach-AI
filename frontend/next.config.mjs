@@ -1,8 +1,13 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/**
+ * Next.js 14 não suporta config em TypeScript (next.config.ts só passou a ser
+ * carregado a partir do Next 15) — com o arquivo .ts o build falhava por
+ * completo. Mantido em .mjs enquanto o projeto estiver na linha 14.x.
+ *
+ * @type {import("next").NextConfig}
+ */
+const nextConfig = {
   reactStrictMode: true,
-  // Allow the service worker to be served from /sw.js at the root
+  // Permite que o service worker seja servido a partir de /sw.js na raiz
   async headers() {
     return [
       {

@@ -10,6 +10,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Mapeia as variáveis CSS declaradas em app/globals.css para tokens do
+        // Tailwind. Sem isso, utilitários como `border-border`, `bg-background`
+        // e `text-foreground` — usados via @apply no globals.css — não existem
+        // e o build falha ("The `border-border` class does not exist").
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
         brand: {
           50:  "#f0f9ff",
           100: "#e0f2fe",

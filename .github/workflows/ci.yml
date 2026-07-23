@@ -94,15 +94,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      # Sem package-lock.json versionado ainda, então npm install (não npm ci) e
-      # sem cache por lockfile. Quando um package-lock.json for commitado, dá para
-      # reativar `cache: npm` + `cache-dependency-path` e trocar para `npm ci`.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: TypeScript type-check
         run: npm run type-check
 
       - name: Lint
         run: npm run lint || true
+
+      # O build é o único passo que exercita o pipeline real de produção.
+      # type-check verde não garante que a aplicação compila: a config em
+      # next.config.ts (não suportada no Next 14), tokens de cor ausentes no
+      # Tailwind e useSearchParams sem Suspense quebravam o build sem produzir
+      # um único erro de tipo.
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+        run: npm run build
