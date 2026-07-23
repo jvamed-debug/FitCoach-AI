@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
 import { supabase } from "@/lib/supabase";
 
 const api = axios.create({
@@ -26,10 +26,12 @@ api.interceptors.response.use(
       original._retry = true;
       const { data, error } = await supabase.auth.refreshSession();
       if (!error && data.session) {
-        original.headers = {
+        // AxiosHeaders.from produz uma instância válida de AxiosRequestHeaders;
+        // um objeto literal não satisfaz o tipo (falta set/get/has/delete...).
+        original.headers = AxiosHeaders.from({
           ...original.headers,
           Authorization: `Bearer ${data.session.access_token}`,
-        };
+        });
         return api(original);
       }
       // Refresh failed — redirect to login

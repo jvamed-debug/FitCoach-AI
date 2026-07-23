@@ -299,7 +299,7 @@ export default function AdminAthleteDetailPage() {
                       {todayRec.recommendation_date as string} · {todayRec.ai_provider as string}
                     </p>
                   </div>
-                  {todayRec.feedback_rating && (
+                  {Boolean(todayRec.feedback_rating) && (
                     <span className="ml-auto text-sm text-yellow-500">
                       {"⭐".repeat(todayRec.feedback_rating as number)}
                     </span>

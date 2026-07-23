@@ -67,6 +67,8 @@ export interface AthleteProfile {
   weekly_availability: WeeklyAvailability | null;
   onboarding_complete: boolean;
   auto_report_enabled: boolean;
+  /** Token do atalho iOS do Apple Health. Retornado por GET /api/auth/me. */
+  apple_health_token: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -189,10 +191,14 @@ export interface StructuredPlan {
 }
 
 export interface NutritionPlan {
+  calories_target: number | null;
+  carbs_g: number | null;
+  protein_g: number | null;
+  fat_g: number | null;
+  hydration_ml: number | null;
   pre_workout: string | null;
   during_workout: string | null;
   post_workout: string | null;
-  daily_calories: number | null;
   notes: string | null;
 }
 

@@ -79,10 +79,17 @@ export function usePushNotifications() {
   return { permission, subscribed, loading, subscribe, unsubscribe };
 }
 
-// Converts a base64url VAPID public key to Uint8Array for the Push API
-function _urlBase64ToUint8Array(base64String: string): Uint8Array {
+// Converts a base64url VAPID public key to Uint8Array for the Push API.
+// O retorno precisa ser respaldado por um ArrayBuffer real: applicationServerKey
+// exige BufferSource, e um Uint8Array<ArrayBufferLike> não satisfaz esse tipo.
+// O laço substitui o spread da string, que exigiria downlevelIteration.
+function _urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+  const output = new Uint8Array(new ArrayBuffer(rawData.length));
+  for (let i = 0; i < rawData.length; i++) {
+    output[i] = rawData.charCodeAt(i);
+  }
+  return output;
 }

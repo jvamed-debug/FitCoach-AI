@@ -219,6 +219,9 @@ async def get_me(current: dict = Depends(get_current_user_either)):
         "resting_hr": user.resting_hr,
         "onboarding_complete": user.onboarding_complete,
         "auto_report_enabled": user.auto_report_enabled,
+        # A tela de configurações do atleta exibe este token para montar o
+        # atalho do iOS; sem ele o campo aparecia sempre vazio.
+        "apple_health_token": str(user.apple_health_token) if user.apple_health_token else None,
         "is_active": user.is_active,
         "created_at": user.created_at,
     }
