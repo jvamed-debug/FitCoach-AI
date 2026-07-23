@@ -137,24 +137,48 @@ class TestAuthorizationURL:
 
 # ── Token refresh ─────────────────────────────────────────────────────────────
 
+async def _make_connection(db_session, athlete, **overrides):
+    """
+    Cria uma PlatformConnection REAL e persistida.
+
+    get_valid_access_token() chama db.add(conn) no caminho de refresh, e o
+    SQLAlchemy rejeita objetos não mapeados — um MagicMock(spec=...) falha ali
+    com UnmappedInstanceError. Usar a entidade real também faz o teste exercitar
+    o caminho de persistência de verdade.
+    """
+    from app.models.athlete import PlatformConnection
+
+    conn = PlatformConnection(
+        athlete_id=athlete.id,
+        provider="strava",
+        provider_athlete_id="12345",
+        is_active=True,
+        consecutive_failures=0,
+        **overrides,
+    )
+    db_session.add(conn)
+    await db_session.commit()
+    await db_session.refresh(conn)
+    return conn
+
+
 class TestTokenRefresh:
     @pytest.mark.asyncio
-    async def test_valid_token_returned_without_refresh(self, db_session):
-        from app.models.athlete import PlatformConnection
+    async def test_valid_token_returned_without_refresh(self, db_session, athlete_user):
         from app.utils.crypto import encrypt_token
 
-        conn = MagicMock(spec=PlatformConnection)
-        conn.access_token_enc = encrypt_token("valid-token")
-        conn.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
-        conn.refresh_token_enc = encrypt_token("refresh-token")
-        conn.id = uuid.uuid4()
+        conn = await _make_connection(
+            db_session, athlete_user,
+            access_token_enc=encrypt_token("valid-token"),
+            refresh_token_enc=encrypt_token("refresh-token"),
+            token_expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
 
         token = await get_valid_access_token(db_session, conn)
         assert token == "valid-token"
 
     @pytest.mark.asyncio
-    async def test_expired_token_triggers_refresh(self, db_session):
-        from app.models.athlete import PlatformConnection
+    async def test_expired_token_triggers_refresh(self, db_session, athlete_user):
         from app.utils.crypto import encrypt_token
 
         new_expires = int((datetime.now(timezone.utc) + timedelta(hours=6)).timestamp())
@@ -164,13 +188,12 @@ class TestTokenRefresh:
             "expires_at": new_expires,
         }
 
-        conn = MagicMock(spec=PlatformConnection)
-        conn.access_token_enc = encrypt_token("old-token")
-        conn.refresh_token_enc = encrypt_token("refresh-token")
-        conn.token_expires_at = datetime.now(timezone.utc) - timedelta(hours=1)  # expired
-        conn.id = uuid.uuid4()
-        conn.consecutive_failures = 0
-        conn.sync_error = None
+        conn = await _make_connection(
+            db_session, athlete_user,
+            access_token_enc=encrypt_token("old-token"),
+            refresh_token_enc=encrypt_token("refresh-token"),
+            token_expires_at=datetime.now(timezone.utc) - timedelta(hours=1),  # expirado
+        )
 
         with patch(
             "app.services.strava_service._strava_service.refresh_access_token",
@@ -181,18 +204,15 @@ class TestTokenRefresh:
         assert token == "new-access-token"
 
     @pytest.mark.asyncio
-    async def test_refresh_failure_increments_counter(self, db_session):
-        from app.models.athlete import PlatformConnection
+    async def test_refresh_failure_increments_counter(self, db_session, athlete_user):
         from app.utils.crypto import encrypt_token
 
-        conn = MagicMock(spec=PlatformConnection)
-        conn.access_token_enc = encrypt_token("old-token")
-        conn.refresh_token_enc = encrypt_token("refresh-token")
-        conn.token_expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
-        conn.id = uuid.uuid4()
-        conn.consecutive_failures = 0
-        conn.is_active = True
-        conn.sync_error = None
+        conn = await _make_connection(
+            db_session, athlete_user,
+            access_token_enc=encrypt_token("old-token"),
+            refresh_token_enc=encrypt_token("refresh-token"),
+            token_expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+        )
 
         with patch(
             "app.services.strava_service._strava_service.refresh_access_token",
@@ -204,18 +224,16 @@ class TestTokenRefresh:
         assert conn.consecutive_failures == 1
 
     @pytest.mark.asyncio
-    async def test_three_failures_deactivates_connection(self, db_session):
-        from app.models.athlete import PlatformConnection
+    async def test_three_failures_deactivates_connection(self, db_session, athlete_user):
         from app.utils.crypto import encrypt_token
 
-        conn = MagicMock(spec=PlatformConnection)
-        conn.access_token_enc = encrypt_token("old-token")
-        conn.refresh_token_enc = encrypt_token("refresh-token")
-        conn.token_expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
-        conn.id = uuid.uuid4()
-        conn.consecutive_failures = 2  # already 2 failures
-        conn.is_active = True
-        conn.sync_error = None
+        conn = await _make_connection(
+            db_session, athlete_user,
+            access_token_enc=encrypt_token("old-token"),
+            refresh_token_enc=encrypt_token("refresh-token"),
+            token_expires_at=datetime.now(timezone.utc) - timedelta(hours=1),
+        )
+        conn.consecutive_failures = 2  # já com 2 falhas
 
         with patch(
             "app.services.strava_service._strava_service.refresh_access_token",
