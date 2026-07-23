@@ -1,9 +1,9 @@
 from sqlalchemy import Column, String, Integer, Numeric, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, JSONVariant
 
 
 class Workout(Base):
@@ -29,8 +29,8 @@ class Workout(Base):
     calories = Column(Integer)
     tss = Column(Numeric(8, 2))
     if_score = Column(Numeric(5, 3))
-    hr_zones = Column(JSONB)
-    power_zones = Column(JSONB)
-    raw_data = Column(JSONB)
+    hr_zones = Column(JSONVariant)
+    power_zones = Column(JSONVariant)
+    raw_data = Column(JSONVariant)
     is_completed = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)

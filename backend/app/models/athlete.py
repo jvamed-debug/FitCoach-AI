@@ -1,9 +1,9 @@
 from sqlalchemy import Column, String, Boolean, DateTime, Date, Numeric, Integer, ForeignKey, Text, ARRAY
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, JSONVariant
 
 
 class Athlete(Base):
@@ -23,7 +23,7 @@ class Athlete(Base):
     primary_modality = Column(String(50))
     fitness_level = Column(String(20))
     goal = Column(Text)
-    weekly_availability = Column(JSONB)
+    weekly_availability = Column(JSONVariant)
     ftp_watts = Column(Integer)
     max_hr = Column(Integer)
     resting_hr = Column(Integer)

@@ -21,6 +21,11 @@ from typing import NamedTuple
 
 # ── TSS calculators ───────────────────────────────────────────────────────────
 
+# Converte TRIMP (Banister) em TSS. Ancorado na definição de TSS: 1 hora no
+# limiar = 100 TSS. Ver a derivação em calculate_tss_from_hr.
+_TRIMP_TO_TSS = 0.60
+
+
 def calculate_tss_cycling(
     duration_seconds: int,
     normalized_power: int,
@@ -48,7 +53,14 @@ def calculate_tss_from_hr(
     HR-based TSS estimate via TRIMP (Banister).
     hr_ratio = (avg_hr - resting_hr) / (max_hr - resting_hr)
     TRIMP     = duration_min × hr_ratio × 0.64 × e^(1.92 × hr_ratio)
-    TSS       ≈ TRIMP × 0.8  (empirical normalisation to ~100 TSS/hour at threshold)
+    TSS       = TRIMP × _TRIMP_TO_TSS
+
+    Calibração de _TRIMP_TO_TSS: por definição, 1 hora no limiar vale 100 TSS.
+    No limiar, hr_ratio ≈ 0.85 (85% da reserva de FC), logo
+        TRIMP(60min, 0.85) = 60 × 0.85 × 0.64 × e^(1.92 × 0.85) ≈ 166.9
+        fator = 100 / 166.9 ≈ 0.60
+    O fator 0.8 usado antes produzia ~133 TSS por hora de limiar, superestimando
+    a carga de todo treino estimado por FC em cerca de 33%.
     """
     if max_hr <= resting_hr:
         raise ValueError("max_hr must be greater than resting_hr")
@@ -56,7 +68,7 @@ def calculate_tss_from_hr(
     hr_ratio = max(0.0, min(1.0, hr_ratio))
     duration_min = duration_seconds / 60
     trimp = duration_min * hr_ratio * 0.64 * math.exp(1.92 * hr_ratio)
-    tss = trimp * 0.8
+    tss = trimp * _TRIMP_TO_TSS
     return round(tss, 2)
 
 

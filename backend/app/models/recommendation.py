@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Date, Numeric
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, JSONVariant
 
 
 class AIRecommendation(Base):
@@ -16,10 +16,10 @@ class AIRecommendation(Base):
     workout_type = Column(String(50))
     title = Column(String(255))
     recommendation_text = Column(Text, nullable=False)
-    structured_plan = Column(JSONB)
-    nutrition_plan = Column(JSONB)
+    structured_plan = Column(JSONVariant)
+    nutrition_plan = Column(JSONVariant)
     rationale = Column(Text)
-    input_context = Column(JSONB)
+    input_context = Column(JSONVariant)
     tokens_used = Column(Integer)
     generation_time_ms = Column(Integer)
     feedback_rating = Column(Integer)

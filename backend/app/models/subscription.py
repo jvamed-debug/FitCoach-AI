@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
-from app.database import Base
+from app.database import Base, JSONVariant
 
 
 class Subscription(Base):
@@ -30,7 +30,7 @@ class WebhookEvent(Base):
     provider = Column(String(50), nullable=False)
     event_id = Column(String(255), nullable=False)
     event_type = Column(String(100))
-    payload = Column(JSONB)
+    payload = Column(JSONVariant)
     processed_at = Column(DateTime(timezone=True))
     error = Column(Text)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)

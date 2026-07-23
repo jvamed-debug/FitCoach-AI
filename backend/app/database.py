@@ -1,6 +1,14 @@
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
+
+
+# JSONB no PostgreSQL (produção) e JSON no SQLite (testes). O compilador do
+# SQLite não sabe renderizar JSONB, o que quebrava a criação das tabelas na
+# suíte. A representação em produção permanece JSONB — nada muda no schema.
+JSONVariant = JSON().with_variant(JSONB(), "postgresql")
 
 
 # SQLite (usado nos testes) usa StaticPool e rejeita pool_size/max_overflow —
