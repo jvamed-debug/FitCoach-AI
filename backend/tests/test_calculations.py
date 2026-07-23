@@ -82,14 +82,26 @@ class TestTSSFromHR:
             calculate_tss_from_hr(3600, 150, 55, 55)  # max_hr == resting_hr
 
     def test_formula_values(self):
-        # Manual calculation: avg=150, max=185, rest=55 → hrr=130, hr_ratio=95/130≈0.731
+        # Confere o FORMATO da fórmula TRIMP. O fator de conversão é importado
+        # do módulo, não duplicado aqui — duplicá-lo já permitiu que este teste
+        # e test_easy_ride exigissem calibrações contraditórias.
+        from app.utils.calculations import _TRIMP_TO_TSS
+
         avg_hr, max_hr, resting_hr = 150, 185, 55
         hr_ratio = (avg_hr - resting_hr) / (max_hr - resting_hr)
         duration_min = 60
         trimp = duration_min * hr_ratio * 0.64 * math.exp(1.92 * hr_ratio)
-        expected = round(trimp * 0.8, 2)
+        expected = round(trimp * _TRIMP_TO_TSS, 2)
         tss = calculate_tss_from_hr(3600, avg_hr, max_hr, resting_hr)
         assert abs(tss - expected) < 0.01
+
+    def test_threshold_hour_is_about_100_tss(self):
+        # Âncora da calibração: por definição, 1 hora no limiar = 100 TSS.
+        # Limiar ≈ 85% da reserva de FC.
+        max_hr, resting_hr = 185, 55
+        threshold_hr = int(resting_hr + 0.85 * (max_hr - resting_hr))
+        tss = calculate_tss_from_hr(3600, threshold_hr, max_hr, resting_hr)
+        assert 90 < tss < 110, f"1h no limiar deveria valer ~100 TSS, obteve {tss}"
 
 
 # ── Strength TSS ──────────────────────────────────────────────────────────────

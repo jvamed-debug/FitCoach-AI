@@ -1,9 +1,9 @@
-from sqlalchemy import Column, String, Boolean, DateTime, Date, Numeric, Integer, ForeignKey, Text, ARRAY
+from sqlalchemy import Column, String, Boolean, DateTime, Date, Numeric, Integer, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
-from app.database import Base, JSONVariant
+from app.database import Base, JSONVariant, StringArrayVariant
 
 
 class Athlete(Base):
@@ -19,7 +19,7 @@ class Athlete(Base):
     gender = Column(String(20))
     height_cm = Column(Numeric(5, 2))
     weight_kg = Column(Numeric(5, 2))
-    sport_modalities = Column(ARRAY(String), default=[])
+    sport_modalities = Column(StringArrayVariant, default=[])
     primary_modality = Column(String(50))
     fitness_level = Column(String(20))
     goal = Column(Text)
