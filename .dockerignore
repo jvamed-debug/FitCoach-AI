@@ -1,24 +1,22 @@
-# Contexto de build na raiz. O backend/Dockerfile só precisa de backend/.
+# Contexto de build na raiz, compartilhado pelos Dockerfiles do backend e do
+# frontend. NÃO excluir as pastas backend/ ou frontend/ inteiras — cada build
+# precisa da sua. Excluímos apenas o que é pesado, gerado ou secreto.
 .git
 .github
-frontend
+.claude
 docs
 multiagente-pipeline
-supabase
-.claude
-*.md
-!backend/**/*.md
-node_modules
 **/node_modules
 **/.next
+**/out
 **/__pycache__
 **/*.py[cod]
 **/.venv
 **/venv
 **/.pytest_cache
 **/.ruff_cache
-.env
-.env.*
+**/htmlcov
+**/.coverage
+**/.env
+**/.env.*
 !**/.env.example
-railway.toml
-docker-compose.yml

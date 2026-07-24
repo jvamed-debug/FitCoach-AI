@@ -7,6 +7,8 @@
  */
 const nextConfig = {
   reactStrictMode: true,
+  // Gera um servidor mínimo e autossuficiente em .next/standalone para o Docker.
+  output: "standalone",
   // Permite que o service worker seja servido a partir de /sw.js na raiz
   async headers() {
     return [
