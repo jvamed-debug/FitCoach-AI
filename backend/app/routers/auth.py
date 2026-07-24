@@ -28,6 +28,18 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+
+class RegisterResponse(BaseModel):
+    email_confirmation_required: bool
+    role: str = "admin"
+    detail: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -69,6 +81,24 @@ async def _supabase_sign_in(email: str, password: str) -> dict:
     if resp.status_code != 200:
         error = resp.json().get("error_description", "Credenciais inválidas")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
+    return resp.json()
+
+
+async def _supabase_sign_up(email: str, password: str, name: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{SUPABASE_AUTH_URL}/signup",
+            headers={
+                "apikey": settings.supabase_anon_key,
+                "Content-Type": "application/json",
+            },
+            json={"email": email, "password": password, "data": {"name": name}},
+            timeout=10,
+        )
+    if resp.status_code not in (200, 201):
+        body = resp.json() if resp.content else {}
+        detail = body.get("msg") or body.get("error_description") or "Não foi possível concluir o cadastro"
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
     return resp.json()
 
 
@@ -140,6 +170,59 @@ async def admin_login(
         refresh_token=tokens["refresh_token"],
         expires_in=tokens.get("expires_in", 3600),
         role="admin",
+    )
+
+
+@router.post("/admin/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED,
+             summary="Cadastro de treinador (admin)")
+async def admin_register(
+    body: RegisterRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Auto-cadastro de treinador: cria o usuário no Supabase Auth, provisiona a
+    linha em admin_users e uma assinatura trial. Se o projeto Supabase exigir
+    confirmação de e-mail, a resposta pede a confirmação antes do login.
+    """
+    if len(body.password) < 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="A senha deve ter ao menos 6 caracteres")
+
+    signup = await _supabase_sign_up(body.email, body.password, body.name)
+
+    # A resposta do GoTrue traz o usuário em "user" (autoconfirm) ou na raiz
+    # (quando exige confirmação). Sessão presente => sem confirmação.
+    user = signup.get("user") or signup
+    user_id = user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail="Resposta de cadastro inválida do provedor de auth")
+    confirmation_required = "access_token" not in signup
+
+    # Provisiona o admin (idempotente) + assinatura trial.
+    existing = await db.execute(select(AdminUser).where(AdminUser.user_id == user_id))
+    admin = existing.scalar_one_or_none()
+    if admin is None:
+        admin = AdminUser(user_id=user_id, name=body.name, email=body.email, is_active=True)
+        db.add(admin)
+        await db.commit()
+        await db.refresh(admin)
+
+    from app.services.billing_service import get_or_create_subscription
+    await get_or_create_subscription(db, str(admin.id))
+
+    await _log_action(db, admin.id, "admin", "register", "admin_users",
+                      resource_id=admin.id, ip=request.client.host)
+
+    if confirmation_required:
+        return RegisterResponse(
+            email_confirmation_required=True,
+            detail="Cadastro criado. Confirme seu e-mail para poder entrar.",
+        )
+    return RegisterResponse(
+        email_confirmation_required=False,
+        detail="Cadastro concluído. Você já pode entrar.",
     )
 
 
