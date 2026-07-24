@@ -1,8 +1,10 @@
 # Deploy do FitCoach AI no Hostinger/Easypanel
 
 O backend (FastAPI) é publicado como um **App Service** do Easypanel, buildado a
-partir de `backend/Dockerfile`. O banco é o **Supabase** (Postgres gerenciado,
-externo) — não é preciso volume persistente no Easypanel para dados.
+partir do `Dockerfile` na **raiz** do repositório (o Easypanel procura o
+Dockerfile na raiz do contexto por padrão; o Dockerfile usa caminhos `backend/...`).
+O banco é o **Supabase** (Postgres gerenciado, externo) — não é preciso volume
+persistente no Easypanel para dados.
 
 > ⚠️ **Uma única réplica.** O APScheduler roda dentro do processo FastAPI (job
 > diário, relatório semanal, lembrete de métricas). Com mais de uma réplica os
@@ -34,8 +36,7 @@ argumento de build.
 2. Adicione um **App Service**.
 3. Fonte: repositório `jvamed-debug/FitCoach-AI`, branch `main`.
 4. Builder: **Dockerfile**.
-5. **Dockerfile Path:** `backend/Dockerfile` (o contexto de build é a raiz do
-   repo — o Dockerfile já usa caminhos `backend/...`).
+5. **Dockerfile Path:** deixe o padrão (`Dockerfile`) — ele está na raiz do repo.
 6. Réplicas: **1**.
 
 Não use Buildpacks/Nixpacks para este serviço.

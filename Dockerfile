@@ -1,7 +1,7 @@
-# Este Dockerfile é construído com o CONTEXTO NA RAIZ do repositório (é assim que
-# Easypanel e Railway buildam ao apontar para backend/Dockerfile). Por isso os
-# COPY usam caminhos a partir da raiz (backend/...). Para buildar localmente:
-#   docker build -f backend/Dockerfile -t fitcoach-backend .
+# Dockerfile do backend, na RAIZ do repo porque o Easypanel (e o Railway)
+# procuram o Dockerfile na raiz do contexto de build por padrão. O contexto é a
+# raiz do repositório, então os COPY usam caminhos `backend/...`.
+# Build local:  docker build -t fitcoach-backend .
 FROM python:3.11-slim
 
 # Bibliotecas de sistema do WeasyPrint (Pango/Cairo/gdk-pixbuf) — o pacote
