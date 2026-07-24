@@ -1,3 +1,7 @@
+# Este Dockerfile é construído com o CONTEXTO NA RAIZ do repositório (é assim que
+# Easypanel e Railway buildam ao apontar para backend/Dockerfile). Por isso os
+# COPY usam caminhos a partir da raiz (backend/...). Para buildar localmente:
+#   docker build -f backend/Dockerfile -t fitcoach-backend .
 FROM python:3.11-slim
 
 # Bibliotecas de sistema do WeasyPrint (Pango/Cairo/gdk-pixbuf) — o pacote
@@ -20,14 +24,14 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Dependências primeiro, para aproveitar o cache de camadas do Docker.
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-COPY . .
+COPY backend/ .
 
 # Usuário não-root (defesa em profundidade — o container não roda como root).
 RUN useradd --create-home --uid 10001 appuser
 USER appuser
 
-# Railway injeta $PORT; localmente cai para 8000.
+# Easypanel/Railway injetam $PORT; localmente cai para 8000.
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
