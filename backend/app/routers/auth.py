@@ -226,6 +226,62 @@ async def admin_register(
     )
 
 
+@router.post("/athlete/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED,
+             summary="Auto-cadastro de atleta (B2C, sem treinador)")
+async def athlete_register(
+    body: RegisterRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Auto-cadastro de atleta autônomo: cria o usuário no Supabase Auth e a linha
+    em athletes SEM treinador (admin_id NULL). O atleta completa o onboarding
+    (consentimento LGPD + perfil) e passa a usar a IA para os próprios treinos.
+    """
+    if len(body.password) < 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="A senha deve ter ao menos 6 caracteres")
+
+    signup = await _supabase_sign_up(body.email, body.password, body.name)
+    user = signup.get("user") or signup
+    user_id = user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail="Resposta de cadastro inválida do provedor de auth")
+    confirmation_required = "access_token" not in signup
+
+    # Provisiona o atleta autônomo (idempotente), sem treinador e sem onboarding.
+    existing = await db.execute(select(Athlete).where(Athlete.user_id == user_id))
+    athlete = existing.scalar_one_or_none()
+    if athlete is None:
+        athlete = Athlete(
+            user_id=user_id,
+            admin_id=None,          # autônomo — sem treinador
+            name=body.name,
+            email=body.email,
+            is_active=True,
+            onboarding_complete=False,
+        )
+        db.add(athlete)
+        await db.commit()
+        await db.refresh(athlete)
+
+    await _log_action(db, athlete.id, "athlete", "register", "athletes",
+                      resource_id=athlete.id, ip=request.client.host)
+
+    if confirmation_required:
+        return RegisterResponse(
+            email_confirmation_required=True,
+            role="athlete",
+            detail="Cadastro criado. Confirme seu e-mail para poder entrar.",
+        )
+    return RegisterResponse(
+        email_confirmation_required=False,
+        role="athlete",
+        detail="Cadastro concluído. Complete seu perfil para começar.",
+    )
+
+
 @router.post("/refresh", response_model=TokenResponse, summary="Renovar access token")
 async def refresh_token(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     tokens = await _supabase_refresh(body.refresh_token)

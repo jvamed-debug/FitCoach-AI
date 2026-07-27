@@ -57,7 +57,9 @@ export default function LoginPage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("E-mail inválido.");
     if (password.length < 6) throw new Error("Senha de no mínimo 6 caracteres.");
 
-    const resp = await api.post("/api/auth/admin/register", {
+    const endpoint =
+      role === "admin" ? "/api/auth/admin/register" : "/api/auth/athlete/register";
+    const resp = await api.post(endpoint, {
       name: name.trim(),
       email,
       password,
@@ -66,7 +68,6 @@ export default function LoginPage() {
     if (resp.data?.email_confirmation_required) {
       setInfo("Cadastro criado! Confirme seu e-mail e depois faça login.");
       setMode("login");
-      setRole("admin");
       return;
     }
     // Sem confirmação → já autentica e entra.
@@ -104,25 +105,32 @@ export default function LoginPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            {isSignup ? "Criar conta de treinador" : "Entrar"}
+            {isSignup
+              ? role === "admin"
+                ? "Criar conta de treinador"
+                : "Criar conta de aluno"
+              : "Entrar"}
           </h2>
 
-          {/* Abas de papel só no login (atletas entram por convite) */}
-          {!isSignup && (
-            <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
-              {(["athlete", "admin"] as const).map((r) => (
-                <button
-                  type="button"
-                  key={r}
-                  onClick={() => setRole(r)}
-                  className={`flex-1 text-center py-2 rounded-md text-sm font-medium transition-colors ${
-                    role === r ? "bg-white text-brand-700 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {r === "athlete" ? "Atleta" : "Treinador"}
-                </button>
-              ))}
-            </div>
+          {/* Abas de papel — no cadastro escolhem o tipo de conta; no login, o modo de entrada */}
+          <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+            {(["athlete", "admin"] as const).map((r) => (
+              <button
+                type="button"
+                key={r}
+                onClick={() => setRole(r)}
+                className={`flex-1 text-center py-2 rounded-md text-sm font-medium transition-colors ${
+                  role === r ? "bg-white text-brand-700 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {r === "athlete" ? "Aluno" : "Treinador"}
+              </button>
+            ))}
+          </div>
+          {isSignup && role === "athlete" && (
+            <p className="-mt-4 mb-5 text-xs text-gray-500">
+              Cadastro autônomo: você usa a IA para montar seus próprios treinos, sem treinador.
+            </p>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -199,7 +207,7 @@ export default function LoginPage() {
                 onClick={() => { setMode("signup"); setServerError(null); setInfo(null); }}
                 className="text-brand-700 hover:underline"
               >
-                É treinador? Criar conta
+                Não tem conta? Criar conta
               </button>
             )}
           </div>

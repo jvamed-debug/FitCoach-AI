@@ -10,7 +10,9 @@ class Athlete(Base):
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
     user_id = Column(GUID, unique=True, nullable=False)
-    admin_id = Column(GUID, ForeignKey("admin_users.id", ondelete="RESTRICT"), nullable=False)
+    # Opcional: atletas que se auto-cadastram (B2C) não têm treinador (admin_id NULL);
+    # atletas convidados por um treinador têm o admin_id preenchido.
+    admin_id = Column(GUID, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     phone = Column(String(30))
