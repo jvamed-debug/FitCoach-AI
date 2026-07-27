@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store/authStore";
 import type { AthleteProfile } from "@/lib/types";
 
@@ -74,12 +75,20 @@ function OnboardingContent() {
     if (password.length < 8) { setError("Senha deve ter ao menos 8 caracteres"); return; }
     setLoading(true); setError(null);
     try {
-      const resp = await api.post("/api/auth/athlete/set-password", {
+      await api.post("/api/auth/athlete/set-password", {
         invite_token: inviteToken,
         password,
         confirm_password: confirmPassword,
       });
-      // Store the token so subsequent calls are authenticated
+      // Estabelece a sessão do Supabase no navegador — sem isso o interceptor
+      // do axios não anexa token e o /me (e passos seguintes) voltam 403.
+      if (inviteInfo?.email) {
+        const { error: signInErr } = await supabase.auth.signInWithPassword({
+          email: inviteInfo.email,
+          password,
+        });
+        if (signInErr) throw new Error(signInErr.message);
+      }
       const me = await api.get("/api/auth/me");
       setAuth("athlete", me.data as AthleteProfile);
       setStep("lgpd");
