@@ -157,12 +157,37 @@ async def health_check():
     return {"status": "ok", "env": settings.app_env, "version": "1.0.0"}
 
 
+def _cors_headers(request: Request) -> dict:
+    """
+    Reflete os headers de CORS na resposta de erro. Handlers de exceção rodam
+    por fora do CORSMiddleware, então sem isto um 500 volta SEM CORS e o navegador
+    reporta apenas "Network Error", escondendo a mensagem real.
+    """
+    origin = request.headers.get("origin")
+    if origin and origin == settings.frontend_url:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
+
+
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc):
-    return JSONResponse(status_code=404, content={"detail": "Rota não encontrada"})
+    return JSONResponse(status_code=404, content={"detail": "Rota não encontrada"},
+                        headers=_cors_headers(request))
 
 
 @app.exception_handler(500)
 async def internal_error_handler(request: Request, exc):
     logger.exception("Unhandled error: %s", exc)
-    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor"})
+    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor"},
+                        headers=_cors_headers(request))
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc):
+    # Captura exceções não-tratadas (ex.: erro de banco) que virariam 500 sem CORS.
+    logger.exception("Unhandled exception: %s", exc)
+    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor"},
+                        headers=_cors_headers(request))

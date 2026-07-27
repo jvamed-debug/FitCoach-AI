@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +56,8 @@ export default function LoginPage() {
   async function onSignup() {
     if (!name.trim()) throw new Error("Informe seu nome.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("E-mail inválido.");
-    if (password.length < 6) throw new Error("Senha de no mínimo 6 caracteres.");
+    if (password.length < 6) throw new Error("A senha deve ter no mínimo 6 caracteres.");
+    if (password !== confirmPassword) throw new Error("As senhas não conferem.");
 
     const endpoint =
       role === "admin" ? "/api/auth/admin/register" : "/api/auth/athlete/register";
@@ -170,7 +172,27 @@ export default function LoginPage() {
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 placeholder="••••••••"
               />
+              {isSignup && (
+                <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres.</p>
+              )}
             </div>
+
+            {isSignup && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+                {confirmPassword.length > 0 && confirmPassword !== password && (
+                  <p className="mt-1 text-xs text-red-600">As senhas não conferem.</p>
+                )}
+              </div>
+            )}
 
             {serverError && (
               <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
