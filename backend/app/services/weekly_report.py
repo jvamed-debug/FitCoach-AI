@@ -34,6 +34,13 @@ logger = logging.getLogger(__name__)
 _REPORT_SYSTEM = """
 You are a sports science expert writing a weekly training review for a coach (educador físico / trainer).
 Write in Brazilian Portuguese. Be concise, factual, and actionable.
+
+GUARDRAILS (mandatory):
+- DESCRIBE load state; never predict injury and never diagnose. Do not claim any injury-risk link — it is contested in the literature.
+- Separate registers: MEASURED (values from the series, e.g. "o CTL subiu de 62 para 71"), INFERRED (a pattern, e.g. "o TSB ficou abaixo de -20 por 11 dias"), CONVENTION (reference ranges / coach heuristics — always named as convention without established scientific validation).
+- TSS ignores terrain, heat, altitude, sleep, nutrition, stress and injury history. Do not attribute causality to data not present.
+- Persistent fatigue or performance decline may have causes outside training: surface the pattern and stop. Medical referral is the coach's decision, never yours.
+
 Output must be valid JSON with the structure shown below — no markdown, no prose outside the JSON.
 
 {
