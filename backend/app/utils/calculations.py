@@ -164,9 +164,12 @@ def calculate_training_load_series(
     current = start
     while current <= end:
         daily_tss = tss_map.get(current, 0.0)
+        # Convenção padrão do PMC (TrainingPeaks): TSB_d = CTL_(d−1) − ATL_(d−1).
+        # Calculado ANTES de atualizar CTL/ATL, ou seja, sobre os valores do dia
+        # anterior. Usar os valores do mesmo dia diverge da tela oficial do TP.
+        tsb = calculate_tsb(ctl, atl)
         ctl = calculate_ctl(ctl, daily_tss)
         atl = calculate_atl(atl, daily_tss)
-        tsb = calculate_tsb(ctl, atl)
         results.append(LoadPoint(load_date=current, ctl=ctl, atl=atl, tsb=tsb, daily_tss=daily_tss))
         current += timedelta(days=1)
 

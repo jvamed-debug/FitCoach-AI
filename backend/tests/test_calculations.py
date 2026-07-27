@@ -233,6 +233,15 @@ class TestTrainingLoadSeries:
         assert result[0].ctl < 80.0
         assert result[0].atl < 90.0
 
+    def test_tsb_uses_previous_day_convention(self):
+        # Convenção padrão do PMC: TSB_d = CTL_(d−1) − ATL_(d−1).
+        series = self._make_series([("2024-01-01", 100.0), ("2024-01-02", 100.0)])
+        result = calculate_training_load_series(series, initial_ctl=50.0, initial_atl=40.0)
+        # Dia 1: TSB = valores do "dia anterior" (o seed) = 50 − 40 = 10.
+        assert round(result[0].tsb, 4) == 10.0
+        # Dia 2: TSB = CTL/ATL do dia 1 (já atualizados).
+        assert round(result[1].tsb, 4) == round(result[0].ctl - result[0].atl, 4)
+
     def test_empty_returns_empty(self):
         assert calculate_training_load_series([]) == []
 
