@@ -303,7 +303,15 @@ function OnboardingContent() {
             </p>
             <p className="text-xs text-gray-400 mb-6">Você pode conectar plataformas depois em Configurações → Integrações.</p>
             <div className="flex flex-col gap-3">
-              <button onClick={() => router.push("/auth/callback/strava")}
+              <button
+                onClick={async () => {
+                  try {
+                    const { data } = await api.get("/api/auth/oauth/strava/authorize");
+                    window.location.href = data.url;
+                  } catch {
+                    setError("Não foi possível iniciar a conexão com o Strava. Tente em Configurações.");
+                  }
+                }}
                 className="w-full rounded-lg border-2 border-orange-500 text-orange-600 py-2.5 text-sm font-semibold hover:bg-orange-50 transition-colors">
                 Conectar Strava agora
               </button>

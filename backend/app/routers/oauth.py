@@ -51,7 +51,10 @@ async def strava_authorize(
     # For now, embed athlete_id in state (signed token would be better in prod).
     full_state = f"{state}:{athlete.id}"
     url = _strava.get_authorization_url(full_state)
-    return RedirectResponse(url)
+    # Retorna a URL em JSON: o frontend chama este endpoint via XHR (com o token)
+    # e só então redireciona o navegador para o Strava. Uma navegação de página
+    # inteira ao endpoint não carregaria o header de autenticação.
+    return {"url": url}
 
 
 @router.get("/strava/callback", summary="Callback OAuth Strava")
@@ -143,7 +146,7 @@ async def tp_authorize(
     import secrets as _secrets
     state = f"{_secrets.token_urlsafe(12)}:{athlete.id}"
     url = _tp.get_authorization_url(state)
-    return RedirectResponse(url)
+    return {"url": url}
 
 
 @router.get("/trainingpeaks/callback", summary="Callback OAuth TrainingPeaks")

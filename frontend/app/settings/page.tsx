@@ -53,10 +53,10 @@ export default function SettingsPage() {
     }
   }, []);
 
-  const handleConnect = (provider: string) => {
-    if (provider === "strava") {
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/oauth/strava/authorize`;
-    }
+  const handleConnect = async (provider: string) => {
+    // Busca a URL de autorização via XHR (carrega o token), depois redireciona.
+    const { data } = await api.get(`/api/auth/oauth/${provider}/authorize`);
+    window.location.href = data.url;
   };
 
   const handleDisconnect = async (provider: string) => {
