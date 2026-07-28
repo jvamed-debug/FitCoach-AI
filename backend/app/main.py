@@ -178,10 +178,19 @@ async def not_found_handler(request: Request, exc):
                         headers=_cors_headers(request))
 
 
+def _error_detail(exc) -> str:
+    # Fora de produção (ou com DEBUG_ERRORS), devolve a causa real para facilitar
+    # o diagnóstico durante o lançamento. Em produção sem a flag, mensagem genérica.
+    import os
+    if settings.app_env != "production" or os.getenv("DEBUG_ERRORS") == "1":
+        return f"{type(exc).__name__}: {exc}"
+    return "Erro interno do servidor"
+
+
 @app.exception_handler(500)
 async def internal_error_handler(request: Request, exc):
     logger.exception("Unhandled error: %s", exc)
-    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor"},
+    return JSONResponse(status_code=500, content={"detail": _error_detail(exc)},
                         headers=_cors_headers(request))
 
 
@@ -189,5 +198,5 @@ async def internal_error_handler(request: Request, exc):
 async def unhandled_exception_handler(request: Request, exc):
     # Captura exceções não-tratadas (ex.: erro de banco) que virariam 500 sem CORS.
     logger.exception("Unhandled exception: %s", exc)
-    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor"},
+    return JSONResponse(status_code=500, content={"detail": _error_detail(exc)},
                         headers=_cors_headers(request))

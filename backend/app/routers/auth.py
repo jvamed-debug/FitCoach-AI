@@ -159,16 +159,27 @@ async def _supabase_sign_out(access_token: str) -> None:
 
 async def _log_action(db: AsyncSession, actor_id, actor_type: str, action: str,
                       resource_type: str, resource_id=None, ip: str | None = None):
-    log = AuditLog(
-        actor_id=actor_id,
-        actor_type=actor_type,
-        action=action,
-        resource_type=resource_type,
-        resource_id=resource_id,
-        ip_address=ip,
-    )
-    db.add(log)
-    await db.commit()
+    # Não-fatal: uma falha ao registrar auditoria nunca deve derrubar a operação
+    # principal (ex.: um cadastro bem-sucedido).
+    try:
+        log = AuditLog(
+            actor_id=actor_id,
+            actor_type=actor_type,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            ip_address=ip,
+        )
+        db.add(log)
+        await db.commit()
+    except Exception:
+        logger.warning("Falha ao registrar auditoria (%s/%s)", actor_type, action, exc_info=True)
+        await db.rollback()
+
+
+def _client_ip(request: Request) -> str | None:
+    """IP do cliente de forma segura (request.client pode ser None atrás de proxy)."""
+    return request.client.host if request.client else None
 
 
 # ── Admin endpoints ───────────────────────────────────────────────────────────
@@ -190,7 +201,7 @@ async def admin_login(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Usuário não é administrador")
 
     await _log_action(db, admin.id, "admin", "login", "admin_users",
-                      resource_id=admin.id, ip=request.client.host)
+                      resource_id=admin.id, ip=_client_ip(request))
 
     return TokenResponse(
         access_token=tokens["access_token"],
@@ -232,7 +243,7 @@ async def admin_register(
     await get_or_create_subscription(db, str(admin.id))
 
     await _log_action(db, admin.id, "admin", "register", "admin_users",
-                      resource_id=admin.id, ip=request.client.host)
+                      resource_id=admin.id, ip=_client_ip(request))
 
     if confirmation_required:
         return RegisterResponse(
@@ -281,7 +292,7 @@ async def athlete_register(
         await db.refresh(athlete)
 
     await _log_action(db, athlete.id, "athlete", "register", "athletes",
-                      resource_id=athlete.id, ip=request.client.host)
+                      resource_id=athlete.id, ip=_client_ip(request))
 
     if confirmation_required:
         return RegisterResponse(
@@ -330,7 +341,7 @@ async def logout(
     user = current["user"]
     actor_type = current["role"]
     await _log_action(db, user.id, actor_type, "logout", actor_type + "s",
-                      resource_id=user.id, ip=request.client.host)
+                      resource_id=user.id, ip=_client_ip(request))
 
     return {"detail": "Logout realizado com sucesso"}
 
@@ -404,7 +415,7 @@ async def update_me(
     await db.refresh(user)
 
     await _log_action(db, user.id, role, "profile_update", role + "s",
-                      resource_id=user.id, ip=request.client.host)
+                      resource_id=user.id, ip=_client_ip(request))
 
     return {"detail": "Perfil atualizado com sucesso"}
 
@@ -428,7 +439,7 @@ async def athlete_login(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Atleta não encontrado")
 
     await _log_action(db, athlete.id, "athlete", "login", "athletes",
-                      resource_id=athlete.id, ip=request.client.host)
+                      resource_id=athlete.id, ip=_client_ip(request))
 
     return TokenResponse(
         access_token=tokens["access_token"],
@@ -549,7 +560,7 @@ async def set_password(
     tokens = await _supabase_sign_in(athlete.email, body.password)
 
     await _log_action(db, athlete.id, "athlete", "set_password", "athletes",
-                      resource_id=athlete.id, ip=request.client.host)
+                      resource_id=athlete.id, ip=_client_ip(request))
 
     return TokenResponse(
         access_token=tokens["access_token"],
