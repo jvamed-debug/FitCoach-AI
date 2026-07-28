@@ -102,6 +102,33 @@ async def _supabase_sign_up(email: str, password: str, name: str) -> dict:
     return resp.json()
 
 
+async def _signup_or_recover_user_id(email: str, password: str, name: str) -> tuple[str, bool]:
+    """
+    Retorna (user_id, confirmation_required).
+
+    Recupera contas meio-provisionadas: se o Supabase Auth já tem o usuário (de
+    uma tentativa anterior em que o perfil no banco não foi criado), faz login
+    para obter o id e segue provisionando o perfil que faltou. Assim o cadastro
+    não trava com "User already registered".
+    """
+    try:
+        signup = await _supabase_sign_up(email, password, name)
+    except HTTPException as e:
+        detail = str(e.detail).lower()
+        if "regist" in detail or "already" in detail:
+            # Já existe no Auth — loga para recuperar (401 se a senha não bater).
+            tokens = await _supabase_sign_in(email, password)
+            return tokens["user"]["id"], False
+        raise
+
+    user = signup.get("user") or signup
+    user_id = user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail="Resposta de cadastro inválida do provedor de auth")
+    return user_id, ("access_token" not in signup)
+
+
 async def _supabase_refresh(refresh_token: str) -> dict:
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -189,16 +216,8 @@ async def admin_register(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="A senha deve ter ao menos 6 caracteres")
 
-    signup = await _supabase_sign_up(body.email, body.password, body.name)
-
-    # A resposta do GoTrue traz o usuário em "user" (autoconfirm) ou na raiz
-    # (quando exige confirmação). Sessão presente => sem confirmação.
-    user = signup.get("user") or signup
-    user_id = user.get("id")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
-                            detail="Resposta de cadastro inválida do provedor de auth")
-    confirmation_required = "access_token" not in signup
+    user_id, confirmation_required = await _signup_or_recover_user_id(
+        body.email, body.password, body.name)
 
     # Provisiona o admin (idempotente) + assinatura trial.
     existing = await db.execute(select(AdminUser).where(AdminUser.user_id == user_id))
@@ -242,13 +261,8 @@ async def athlete_register(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="A senha deve ter ao menos 6 caracteres")
 
-    signup = await _supabase_sign_up(body.email, body.password, body.name)
-    user = signup.get("user") or signup
-    user_id = user.get("id")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY,
-                            detail="Resposta de cadastro inválida do provedor de auth")
-    confirmation_required = "access_token" not in signup
+    user_id, confirmation_required = await _signup_or_recover_user_id(
+        body.email, body.password, body.name)
 
     # Provisiona o atleta autônomo (idempotente), sem treinador e sem onboarding.
     existing = await db.execute(select(Athlete).where(Athlete.user_id == user_id))
