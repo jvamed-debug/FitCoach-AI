@@ -31,12 +31,21 @@ _strava = StravaService()
 
 
 async def _audit(db: AsyncSession, athlete: Athlete, action: str, resource_id=None, ip: str | None = None):
-    db.add(AuditLog(
-        actor_id=athlete.id, actor_type="athlete",
-        action=action, resource_type="platform_connections",
-        resource_id=resource_id, ip_address=ip,
-    ))
-    await db.commit()
+    # Não-fatal: auditoria nunca deve derrubar a operação (a conexão já foi salva).
+    try:
+        db.add(AuditLog(
+            actor_id=athlete.id, actor_type="athlete",
+            action=action, resource_type="platform_connections",
+            resource_id=resource_id, ip_address=ip,
+        ))
+        await db.commit()
+    except Exception:
+        logger.warning("Falha ao registrar auditoria (%s)", action, exc_info=True)
+        await db.rollback()
+
+
+def _client_ip(request: Request) -> str | None:
+    return request.client.host if request.client else None
 
 
 # ── Strava OAuth ──────────────────────────────────────────────────────────────
@@ -126,7 +135,7 @@ async def strava_callback(
     await db.commit()
     await db.refresh(conn)
 
-    await _audit(db, athlete, "strava_connected", resource_id=conn.id, ip=request.client.host)
+    await _audit(db, athlete, "strava_connected", resource_id=conn.id, ip=_client_ip(request))
     logger.info("Strava connected for athlete %s (Strava ID: %s)", athlete.id, provider_athlete_id)
 
     return RedirectResponse(f"{settings.frontend_url}/settings?strava=connected")
@@ -212,7 +221,7 @@ async def tp_callback(
     await db.commit()
     await db.refresh(conn)
 
-    await _audit(db, athlete, "trainingpeaks_connected", resource_id=conn.id, ip=request.client.host)
+    await _audit(db, athlete, "trainingpeaks_connected", resource_id=conn.id, ip=_client_ip(request))
     logger.info("TrainingPeaks connected for athlete %s", athlete.id)
 
     return RedirectResponse(f"{settings.frontend_url}/settings?tp=connected")
@@ -240,7 +249,7 @@ async def tp_disconnect(
     db.add(conn)
     await db.commit()
 
-    await _audit(db, athlete, "trainingpeaks_disconnected", resource_id=conn.id, ip=request.client.host)
+    await _audit(db, athlete, "trainingpeaks_disconnected", resource_id=conn.id, ip=_client_ip(request))
     return {"detail": "TrainingPeaks desconectado"}
 
 
@@ -266,7 +275,7 @@ async def strava_disconnect(
     db.add(conn)
     await db.commit()
 
-    await _audit(db, athlete, "strava_disconnected", resource_id=conn.id, ip=request.client.host)
+    await _audit(db, athlete, "strava_disconnected", resource_id=conn.id, ip=_client_ip(request))
     return {"detail": "Strava desconectado"}
 
 
