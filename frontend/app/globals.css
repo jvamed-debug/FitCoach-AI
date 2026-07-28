@@ -4,22 +4,65 @@
 
 @layer base {
   :root {
-    --radius: 0.5rem;
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+
+    /* Neutros frios (escolhidos, não cinza puro) */
+    --background: 213 33% 97%;
+    --surface: 0 0% 100%;
+    --surface-2: 213 33% 96%;
+    --foreground: 222 44% 11%;
+    --muted: 214 30% 91%;
+    --muted-foreground: 215 18% 42%;
+    --border: 214 27% 88%;
+    --input: 214 27% 88%;
+    --ring: 186 74% 30%;
+
+    /* Acento (interativo) — teal endurance */
+    --accent: 186 82% 29%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Semânticas de carga (a cor É informação) */
+    --ctl: 219 66% 47%;   /* Fitness  */
+    --atl: 33  78% 43%;   /* Fadiga   */
+    --tsb: 147 74% 32%;   /* Forma    */
+    --fresh: 147 74% 32%;
+    --fatigued: 33 78% 43%;
+    --critical: 0 62% 50%;
+  }
+
+  .dark {
+    --background: 220 33% 5%;
+    --surface: 219 30% 11%;
+    --surface-2: 219 33% 8%;
+    --foreground: 213 40% 95%;
+    --muted: 218 25% 18%;
+    --muted-foreground: 214 16% 60%;
+    --border: 218 25% 17%;
+    --input: 218 25% 17%;
+    --ring: 174 62% 50%;
+
+    --accent: 174 62% 50%;
+    --accent-foreground: 200 40% 8%;
+
+    --ctl: 217 100% 68%;
+    --atl: 36 76% 60%;
+    --tsb: 147 62% 53%;
+    --fresh: 147 62% 53%;
+    --fatigued: 36 76% 60%;
+    --critical: 4 84% 65%;
   }
 
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans), "Helvetica Neue", Arial, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  /* Numerais tabulares onde há dado — a assinatura de "instrumento" */
+  .tnum {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
   }
 }

@@ -10,27 +10,43 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Mapeia as variáveis CSS declaradas em app/globals.css para tokens do
-        // Tailwind. Sem isso, utilitários como `border-border`, `bg-background`
-        // e `text-foreground` — usados via @apply no globals.css — não existem
-        // e o build falha ("The `border-border` class does not exist").
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          2: "hsl(var(--surface-2))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        brand: {
-          50:  "#f0f9ff",
-          100: "#e0f2fe",
-          500: "#0ea5e9",
-          600: "#0284c7",
-          700: "#0369a1",
-          900: "#0c4a6e",
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
         },
+        // Semânticas de carga de treino
+        ctl: "hsl(var(--ctl))",
+        atl: "hsl(var(--atl))",
+        tsb: "hsl(var(--tsb))",
+        fresh: "hsl(var(--fresh))",
+        fatigued: "hsl(var(--fatigued))",
+        critical: "hsl(var(--critical))",
+        // `brand` refinado para teal — telas legadas adotam o novo acento
+        brand: {
+          50:  "#eafcfb",
+          100: "#cbf3f1",
+          500: "#12a3ad",
+          600: "#0e7c86",
+          700: "#0a5f67",
+          900: "#083f45",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "Helvetica Neue", "Arial", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

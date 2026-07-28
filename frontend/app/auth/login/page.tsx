@@ -97,32 +97,94 @@ export default function LoginPage() {
 
   const isSignup = mode === "signup";
 
+  const inputCls =
+    "w-full rounded-lg border border-input bg-surface px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30";
+  const labelCls = "block text-[13px] font-medium text-foreground mb-1.5";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-700">FitCoach AI</h1>
-          <p className="text-gray-500 mt-1 text-sm">Coaching esportivo com inteligência artificial</p>
+    <div className="min-h-screen w-full bg-background lg:grid lg:grid-cols-[1.05fr_1fr]">
+      {/* ── Painel-tese (só desktop) ── */}
+      <aside
+        className="relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex"
+        style={{ background: "linear-gradient(155deg,#0a5f67 0%,#0e1626 72%)" }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)",
+            backgroundSize: "46px 46px",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-28 -top-28 h-[26rem] w-[26rem] rounded-full blur-3xl"
+          style={{ background: "radial-gradient(circle,rgba(42,211,198,.32),transparent 62%)" }}
+        />
+        <div className="relative flex items-center gap-3 text-xl font-extrabold tracking-tight">
+          <span
+            className="grid h-9 w-9 place-items-center rounded-[10px] font-mono text-sm"
+            style={{ background: "conic-gradient(from 210deg,#2AD3C6,#5B9BFF,#3ED07E,#2AD3C6)" }}
+          >
+            FC
+          </span>
+          FitCoach<span style={{ color: "#2AD3C6" }}>.AI</span>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            {isSignup
-              ? role === "admin"
-                ? "Criar conta de treinador"
-                : "Criar conta de aluno"
-              : "Entrar"}
+        <div className="relative max-w-sm">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.18em] text-white/45">
+            Coaching esportivo com IA
+          </p>
+          <h1 className="text-balance text-4xl font-extrabold leading-[1.08] tracking-tight">
+            Treine pelos números que <span style={{ color: "#3ED07E" }}>importam</span>.
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-white/60">
+            Carga de treino (CTL / ATL / TSB) pelo modelo Banister, recomendações diárias da IA e
+            integração com o Strava — uma decisão de treino por vez.
+          </p>
+          <div className="mt-8 flex gap-6 font-mono text-xs text-white/55">
+            <span><i className="mr-1.5 inline-block h-0.5 w-2.5 align-middle" style={{ background: "#5B9BFF" }} />Fitness</span>
+            <span><i className="mr-1.5 inline-block h-0.5 w-2.5 align-middle" style={{ background: "#E7A94A" }} />Fadiga</span>
+            <span><i className="mr-1.5 inline-block h-0.5 w-2.5 align-middle" style={{ background: "#3ED07E" }} />Forma</span>
+          </div>
+        </div>
+
+        <p className="relative font-mono text-[11px] leading-relaxed text-white/35">
+          Descreve carga de treino — não avalia saúde nem prediz lesão.
+        </p>
+      </aside>
+
+      {/* ── Formulário ── */}
+      <main className="flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex items-center gap-2.5 text-lg font-extrabold tracking-tight lg:hidden">
+            <span
+              className="grid h-8 w-8 place-items-center rounded-[9px] font-mono text-xs text-white"
+              style={{ background: "conic-gradient(from 210deg,#12a3ad,#2563c9,#15925a,#12a3ad)" }}
+            >
+              FC
+            </span>
+            FitCoach<span className="text-accent">.AI</span>
+          </div>
+
+          <div className="mb-1 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            {isSignup ? "Criar conta" : "Bem-vindo de volta"}
+          </div>
+          <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-foreground">
+            {isSignup ? (role === "admin" ? "Conta de treinador" : "Conta de aluno") : "Entrar"}
           </h2>
 
-          {/* Abas de papel — no cadastro escolhem o tipo de conta; no login, o modo de entrada */}
-          <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+          <div className="mb-1 grid grid-cols-2 gap-1 rounded-xl border border-border bg-surface-2 p-1">
             {(["athlete", "admin"] as const).map((r) => (
               <button
                 type="button"
                 key={r}
                 onClick={() => setRole(r)}
-                className={`flex-1 text-center py-2 rounded-md text-sm font-medium transition-colors ${
-                  role === r ? "bg-white text-brand-700 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                className={`rounded-lg py-2 text-sm font-semibold transition-colors ${
+                  role === r
+                    ? "bg-surface text-accent shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {r === "athlete" ? "Aluno" : "Treinador"}
@@ -130,115 +192,68 @@ export default function LoginPage() {
             ))}
           </div>
           {isSignup && role === "athlete" && (
-            <p className="-mt-4 mb-5 text-xs text-gray-500">
+            <p className="mb-4 mt-2 text-xs leading-relaxed text-muted-foreground">
               Cadastro autônomo: você usa a IA para montar seus próprios treinos, sem treinador.
             </p>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             {isSignup && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                <input
-                  type="text"
-                  autoComplete="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                  placeholder="Seu nome"
-                />
+                <label className={labelCls}>Nome</label>
+                <input type="text" autoComplete="name" value={name}
+                  onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="Seu nome" />
               </div>
             )}
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-              <input
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                placeholder="seu@email.com"
-              />
+              <label className={labelCls}>E-mail</label>
+              <input type="email" autoComplete="email" value={email}
+                onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="seu@email.com" />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-              <input
-                type="password"
-                autoComplete={isSignup ? "new-password" : "current-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
-              {isSignup && (
-                <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres.</p>
-              )}
+              <label className={labelCls}>Senha</label>
+              <input type="password" autoComplete={isSignup ? "new-password" : "current-password"}
+                value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls}
+                placeholder="••••••••" />
+              {isSignup && <p className="mt-1.5 text-xs text-muted-foreground">Mínimo 6 caracteres.</p>}
             </div>
-
             {isSignup && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                  placeholder="••••••••"
-                />
+                <label className={labelCls}>Confirmar senha</label>
+                <input type="password" autoComplete="new-password" value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)} className={inputCls} placeholder="••••••••" />
                 {confirmPassword.length > 0 && confirmPassword !== password && (
-                  <p className="mt-1 text-xs text-red-600">As senhas não conferem.</p>
+                  <p className="mt-1.5 text-xs text-critical">As senhas não conferem.</p>
                 )}
               </div>
             )}
 
             {serverError && (
-              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              <div className="rounded-lg border border-critical/30 bg-critical/10 px-4 py-3 text-sm text-critical">
                 {serverError}
               </div>
             )}
             {info && (
-              <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+              <div className="rounded-lg border border-fresh/30 bg-fresh/10 px-4 py-3 text-sm text-fresh">
                 {info}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-accent-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
               {loading ? "Aguarde…" : isSignup ? "Criar conta" : "Entrar"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
-            {isSignup ? (
-              <button
-                type="button"
-                onClick={() => { setMode("login"); setServerError(null); setInfo(null); }}
-                className="text-brand-700 hover:underline"
-              >
-                Já tem conta? Entrar
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => { setMode("signup"); setServerError(null); setInfo(null); }}
-                className="text-brand-700 hover:underline"
-              >
-                Não tem conta? Criar conta
-              </button>
-            )}
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            <button type="button"
+              onClick={() => { setMode(isSignup ? "login" : "signup"); setServerError(null); setInfo(null); }}
+              className="font-semibold text-accent hover:underline">
+              {isSignup ? "Já tem conta? Entrar" : "Não tem conta? Criar conta"}
+            </button>
           </div>
         </div>
-
-        <p className="mt-6 text-center text-xs text-gray-400">
-          Ao continuar, você concorda com nossos termos de uso e política de privacidade.
-        </p>
-      </div>
+      </main>
     </div>
   );
 }
