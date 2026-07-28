@@ -3,6 +3,7 @@ import { Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import PWAInit from "@/components/layout/PWAInit";
 import BottomNav from "@/components/layout/BottomNav";
+import AppHeader from "@/components/layout/AppHeader";
 
 const sora = Sora({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="pb-16 md:pb-0">
         <PWAInit />
+        <AppHeader />
         {children}
         <BottomNav />
       </body>

@@ -30,32 +30,6 @@ const TSB_STATE = (tsb: number) => {
   return               { label: "Muito fresco", bg: "bg-teal-50",   text: "text-teal-700",   border: "border-teal-200" };
 };
 
-function NavBar() {
-  const { profile } = useAuthStore();
-  const athlete = profile as AthleteProfile | null;
-  return (
-    <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-      <Link href="/dashboard" className="font-bold text-brand-700 text-lg">FitCoach AI</Link>
-      <div className="flex gap-5 text-sm">
-        {[
-          ["/dashboard",      "Dashboard"],
-          ["/workouts",       "Treinos"],
-          ["/strength",       "Musculação"],
-          ["/recommendations","Recomendação"],
-          ["/metrics",        "Métricas"],
-        ].map(([href, label]) => (
-          <Link key={href} href={href}
-            className="text-gray-500 hover:text-brand-700 transition-colors">{label}</Link>
-        ))}
-      </div>
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-600">{athlete?.name?.split(" ")[0]}</span>
-        <Link href="/settings" className="text-gray-400 hover:text-gray-600 text-sm">⚙️</Link>
-      </div>
-    </nav>
-  );
-}
-
 export default function DashboardPage() {
   const router = useRouter();
   const { role, profile } = useAuthStore();
@@ -99,9 +73,7 @@ export default function DashboardPage() {
   const tsbState = TSB_STATE(tsb);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavBar />
-
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
         {/* Greeting + critical alert */}
         <div className="flex items-start justify-between">
