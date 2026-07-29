@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/authStore";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -72,6 +73,10 @@ function DayPicker({
 
 export default function NewAthletePage() {
   const router = useRouter();
+  const { role } = useAuthStore();
+  useEffect(() => {
+    if (!role) router.replace("/auth/login");
+  }, [role, router]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import api from "@/lib/api";
+import { useAuthStore } from "@/lib/store/authStore";
 
 const SESSION_TYPES = [
   { value: "upper",     label: "Superior" },
@@ -48,6 +49,10 @@ const COMMON_EXERCISES = [
 
 export default function NewStrengthPage() {
   const router = useRouter();
+  const { role } = useAuthStore();
+  useEffect(() => {
+    if (!role) router.replace("/auth/login");
+  }, [role, router]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [autocomplete, setAutocomplete] = useState<{ index: number; query: string } | null>(null);
@@ -97,7 +102,7 @@ export default function NewStrengthPage() {
         })),
       };
       await api.post("/api/strength", payload);
-      router.push("/strength");
+      router.push("/dashboard");
     } catch (err: unknown) {
       setServerError(
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??

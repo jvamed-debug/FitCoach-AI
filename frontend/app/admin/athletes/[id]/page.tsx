@@ -6,6 +6,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import api from "@/lib/api";
+import { useAuthStore } from "@/lib/store/authStore";
 import CTLATLTSBChart from "@/components/charts/CTLATLTSBChart";
 import type { TrainingLoad, Workout } from "@/lib/types";
 
@@ -44,6 +45,10 @@ const SPORT_ICON: Record<string, string> = {
 export default function AdminAthleteDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { role } = useAuthStore();
+  useEffect(() => {
+    if (!role) router.replace("/auth/login");
+  }, [role, router]);
 
   const [athlete, setAthlete]         = useState<AthleteDetail | null>(null);
   const [activeTab, setActiveTab]     = useState<Tab>("profile");
