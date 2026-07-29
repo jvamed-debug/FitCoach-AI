@@ -132,13 +132,27 @@ async def recalculate_athlete_load(
     )
     strength_sessions = strength_result.scalars().all()
 
+    # Fuso local do atleta (§8.8): a data de agrupamento sai do horário LOCAL,
+    # não de UTC. Um treino às 21h40 em São Paulo (00h40 UTC) pertence ao dia
+    # de São Paulo, não ao dia seguinte em UTC.
+    from zoneinfo import ZoneInfo
+    try:
+        tz = ZoneInfo(getattr(athlete, "timezone", None) or "America/Sao_Paulo")
+    except Exception:
+        tz = ZoneInfo("America/Sao_Paulo")
+
+    def _local_date(dt):
+        if not isinstance(dt, datetime):
+            return dt  # já é date (ex.: session_date)
+        aware = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        return aware.astimezone(tz).date()
+
     # Build TSS series
     tss_entries: list[dict] = []
     for w in workouts:
         tss_val = _tss_for_workout(w, athlete)
         if tss_val > 0:
-            d = w.start_time.date() if isinstance(w.start_time, datetime) else w.start_time
-            tss_entries.append({"date": d, "tss": tss_val})
+            tss_entries.append({"date": _local_date(w.start_time), "tss": tss_val})
 
     for s in strength_sessions:
         tss_val = _tss_for_strength(s)

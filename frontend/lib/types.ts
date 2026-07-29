@@ -67,6 +67,7 @@ export interface AthleteProfile {
   weekly_availability: WeeklyAvailability | null;
   onboarding_complete: boolean;
   auto_report_enabled: boolean;
+  timezone: string | null;
   /** Token do atalho iOS do Apple Health. Retornado por GET /api/auth/me. */
   apple_health_token: string | null;
   is_active: boolean;

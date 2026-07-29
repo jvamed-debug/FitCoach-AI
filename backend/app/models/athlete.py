@@ -28,6 +28,8 @@ class Athlete(Base):
     ftp_watts = Column(Integer)
     max_hr = Column(Integer)
     resting_hr = Column(Integer)
+    # Fuso IANA do atleta (§8.8): o agrupamento diário de carga usa a data LOCAL.
+    timezone = Column(String(64), default="America/Sao_Paulo")
     anamnese_encrypted = Column("anamnese_encrypted", String)  # pgp_sym_encrypt result stored as text
     is_active = Column(Boolean, default=True)
     onboarding_complete = Column(Boolean, default=False)

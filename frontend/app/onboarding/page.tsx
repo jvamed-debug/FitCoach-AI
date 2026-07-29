@@ -121,6 +121,8 @@ function OnboardingContent() {
       if (gender) body.gender = gender;
       if (heightCm) body.height_cm = parseFloat(heightCm);
       if (weightKg) body.weight_kg = parseFloat(weightKg);
+      // §8.8 — captura o fuso IANA do navegador para o agrupamento diário de carga.
+      try { body.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* ignore */ }
       if (Object.keys(body).length > 0) await api.put("/api/auth/me", body);
       const me = await api.get("/api/auth/me");
       setAuth(role ?? "athlete", me.data as AthleteProfile);
