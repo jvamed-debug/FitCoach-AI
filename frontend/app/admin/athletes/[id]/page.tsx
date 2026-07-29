@@ -34,7 +34,7 @@ interface AdherenceSummary {
 
 const TSB_COLOR: Record<string, string> = {
   good: "text-green-600", moderate: "text-yellow-600",
-  alert: "text-orange-600", critical: "text-red-600", unknown: "text-gray-400",
+  alert: "text-orange-600", critical: "text-red-600", unknown: "text-muted-foreground",
 };
 
 const SPORT_ICON: Record<string, string> = {
@@ -130,12 +130,12 @@ export default function AdminAthleteDetailPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">Carregando…</div>
+    <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando…</div>
   );
   if (!athlete) return null;
 
   const load = athlete.training_load;
-  const tsbColor = TSB_COLOR[load.tsb_status] ?? "text-gray-400";
+  const tsbColor = TSB_COLOR[load.tsb_status] ?? "text-muted-foreground";
 
   const KPI = [
     { label: "CTL",   value: load.ctl?.toFixed(1) ?? "—",   color: "text-blue-600" },
@@ -143,20 +143,20 @@ export default function AdminAthleteDetailPage() {
     { label: "TSB",   value: load.tsb !== null ? `${load.tsb > 0 ? "+" : ""}${load.tsb.toFixed(1)}` : "—", color: tsbColor },
     { label: "Último treino", value: athlete.days_since_last_workout !== null
         ? (athlete.days_since_last_workout === 0 ? "hoje" : `${athlete.days_since_last_workout}d atrás`)
-        : "—", color: athlete.no_workout_alert ? "text-orange-600" : "text-gray-800" },
+        : "—", color: athlete.no_workout_alert ? "text-orange-600" : "text-foreground" },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-2">
-            <Link href="/admin/athletes" className="text-sm text-gray-400 hover:text-gray-600">← Atletas</Link>
+            <Link href="/admin/athletes" className="text-sm text-muted-foreground hover:text-muted-foreground">← Atletas</Link>
           </div>
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 {athlete.name}
                 {load.tsb !== null && load.tsb < -25 && (
                   <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">
@@ -169,12 +169,12 @@ export default function AdminAthleteDetailPage() {
                   </span>
                 )}
               </h1>
-              <p className="text-sm text-gray-500">{athlete.email}</p>
+              <p className="text-sm text-muted-foreground">{athlete.email}</p>
             </div>
             <div className="flex gap-2">
               {!athlete.onboarding_complete && (
                 <button onClick={resendInvite} disabled={resending}
-                  className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                  className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-muted-foreground hover:bg-background disabled:opacity-40">
                   {resending ? "Reenviando…" : "Reenviar convite"}
                 </button>
               )}
@@ -191,21 +191,21 @@ export default function AdminAthleteDetailPage() {
         {/* KPI row */}
         <div className="grid grid-cols-4 gap-4">
           {KPI.map(({ label, value, color }) => (
-            <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <div key={label} className="bg-surface rounded-xl border border-border p-4">
+              <p className="text-xs text-muted-foreground mb-1">{label}</p>
               <p className={`text-2xl font-bold ${color}`}>{value}</p>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-border">
           {(["profile", "plan", "history", "adherence"] as Tab[]).map((tab) => (
             <button key={tab} onClick={() => handleTabChange(tab)}
               className={`px-4 py-2.5 text-sm font-medium transition-colors capitalize ${
                 activeTab === tab
                   ? "border-b-2 border-brand-600 text-brand-700"
-                  : "text-gray-500 hover:text-gray-700"
+                  : "text-muted-foreground hover:text-foreground"
               }`}>
               {{
                 profile: "Perfil",
@@ -220,8 +220,8 @@ export default function AdminAthleteDetailPage() {
         {/* ── Profile tab ── */}
         {activeTab === "profile" && (
           <div className="grid grid-cols-2 gap-5">
-            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-              <h3 className="font-medium text-gray-900">Dados pessoais</h3>
+            <div className="bg-surface rounded-xl border border-border p-5 space-y-3">
+              <h3 className="font-medium text-foreground">Dados pessoais</h3>
               {[
                 ["Nascimento", athlete.birth_date ?? "—"],
                 ["Sexo",       athlete.gender ?? "—"],
@@ -231,14 +231,14 @@ export default function AdminAthleteDetailPage() {
                 ["Nível",      athlete.fitness_level ?? "—"],
               ].map(([l, v]) => (
                 <div key={String(l)} className="flex justify-between text-sm">
-                  <span className="text-gray-500">{l}</span>
+                  <span className="text-muted-foreground">{l}</span>
                   <span className="font-medium capitalize">{v}</span>
                 </div>
               ))}
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-              <h3 className="font-medium text-gray-900">Fisiologia & Modalidades</h3>
+            <div className="bg-surface rounded-xl border border-border p-5 space-y-3">
+              <h3 className="font-medium text-foreground">Fisiologia & Modalidades</h3>
               {[
                 ["FTP",          athlete.ftp_watts ? `${athlete.ftp_watts}W` : "—"],
                 ["FC máxima",    athlete.max_hr ? `${athlete.max_hr}bpm` : "—"],
@@ -246,7 +246,7 @@ export default function AdminAthleteDetailPage() {
                 ["Mod. principal", athlete.primary_modality ?? "—"],
               ].map(([l, v]) => (
                 <div key={String(l)} className="flex justify-between text-sm">
-                  <span className="text-gray-500">{l}</span>
+                  <span className="text-muted-foreground">{l}</span>
                   <span className="font-medium capitalize">{v}</span>
                 </div>
               ))}
@@ -257,9 +257,9 @@ export default function AdminAthleteDetailPage() {
               </div>
             </div>
 
-            <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+            <div className="col-span-2 bg-surface rounded-xl border border-border p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-gray-900">Anamnese</h3>
+                <h3 className="font-medium text-foreground">Anamnese</h3>
                 {anamneseSaved && <span className="text-xs text-green-600">✓ Salvo</span>}
                 {anamnese === null && (
                   <button onClick={loadAnamnese}
@@ -271,7 +271,7 @@ export default function AdminAthleteDetailPage() {
               {anamnese !== null && (
                 <>
                   <textarea value={anamneseText} onChange={(e) => setAnamneseText(e.target.value)}
-                    rows={10} className="w-full text-sm font-mono rounded-lg border border-gray-200 px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                    rows={10} className="w-full text-sm font-mono rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                     placeholder="Histórico médico, lesões, medicações…" />
                   <button onClick={saveAnamnese}
                     className="mt-2 px-4 py-2 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700">
@@ -292,15 +292,15 @@ export default function AdminAthleteDetailPage() {
             <AdminAthleteReportCard athleteId={id} />
 
             {todayRec ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="font-medium text-gray-900 mb-3">Última recomendação</h3>
+              <div className="bg-surface rounded-xl border border-border p-5">
+                <h3 className="font-medium text-foreground mb-3">Última recomendação</h3>
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">
                     {SPORT_ICON[(todayRec.workout_type as string) ?? ""] ?? "🏋️"}
                   </span>
                   <div>
                     <p className="font-medium">{todayRec.title as string}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {todayRec.recommendation_date as string} · {todayRec.ai_provider as string}
                     </p>
                   </div>
@@ -312,33 +312,33 @@ export default function AdminAthleteDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-400">Nenhuma recomendação disponível.</p>
+              <p className="text-sm text-muted-foreground">Nenhuma recomendação disponível.</p>
             )}
           </div>
         )}
 
         {/* ── History tab ── */}
         {activeTab === "history" && (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-surface rounded-xl border border-border overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-background border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Data</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500">Treino</th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">Duração</th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">TSS</th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-gray-500">Fonte</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Data</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Treino</th>
+                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Duração</th>
+                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">TSS</th>
+                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Fonte</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {workouts.length === 0 ? (
-                  <tr><td colSpan={5} className="py-8 text-center text-gray-400">Nenhum treino ainda</td></tr>
+                  <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">Nenhum treino ainda</td></tr>
                 ) : workouts.map((w) => {
                   const dur = w.duration_seconds
                     ? `${Math.floor(w.duration_seconds / 3600)}h${Math.floor((w.duration_seconds % 3600)/60).toString().padStart(2,"0")}`
                     : "—";
                   return (
-                    <tr key={w.id} className="hover:bg-gray-50">
+                    <tr key={w.id} className="hover:bg-background">
                       <td className="px-4 py-3">
                         {w.start_time
                           ? format(parseISO(w.start_time), "dd/MM/yy", { locale: ptBR })
@@ -348,12 +348,12 @@ export default function AdminAthleteDetailPage() {
                         <span className="mr-2">{SPORT_ICON[w.sport_type] ?? "⚡"}</span>
                         {w.title ?? w.sport_type}
                       </td>
-                      <td className="px-4 py-3 text-center text-gray-600">{dur}</td>
+                      <td className="px-4 py-3 text-center text-muted-foreground">{dur}</td>
                       <td className="px-4 py-3 text-center font-medium">
                         {w.tss ? w.tss.toFixed(0) : "—"}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full capitalize">
+                        <span className="text-xs text-muted-foreground bg-surface-2 px-2 py-0.5 rounded-full capitalize">
                           {w.source}
                         </span>
                       </td>
@@ -388,10 +388,10 @@ export default function AdminAthleteDetailPage() {
                 color: "text-blue-600",
               },
             ].map(({ label, value, sub, color }) => (
-              <div key={label} className="bg-white rounded-xl border border-gray-200 p-5">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
+              <div key={label} className="bg-surface rounded-xl border border-border p-5">
+                <p className="text-xs text-muted-foreground mb-1">{label}</p>
                 <p className={`text-3xl font-bold ${color}`}>{value}</p>
-                <p className="text-xs text-gray-400 mt-1">{sub}</p>
+                <p className="text-xs text-muted-foreground mt-1">{sub}</p>
               </div>
             ))}
           </div>
@@ -435,10 +435,10 @@ function AdminAthleteReportCard({ athleteId }: { athleteId: string }) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between gap-4">
+    <div className="bg-surface rounded-xl border border-border p-4 flex items-center justify-between gap-4">
       <div>
-        <p className="font-medium text-gray-900 text-sm">Relatório mensal — {label}</p>
-        <p className="text-xs text-gray-400 mt-0.5">PDF com treinos, CTL/ATL/TSB e aderência</p>
+        <p className="font-medium text-foreground text-sm">Relatório mensal — {label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">PDF com treinos, CTL/ATL/TSB e aderência</p>
       </div>
       <button
         onClick={download}

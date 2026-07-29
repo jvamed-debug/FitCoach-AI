@@ -2,9 +2,26 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store/authStore";
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try { localStorage.setItem("fc-theme", next ? "dark" : "light"); } catch { /* ignore */ }
+  }
+  return (
+    <button type="button" onClick={toggle} aria-label="Alternar tema"
+      className="grid h-9 w-9 place-items-center rounded-lg border border-border bg-surface text-muted-foreground transition hover:bg-surface-2 hover:text-foreground">
+      {dark ? "☀" : "☾"}
+    </button>
+  );
+}
 
 const ATHLETE_LINKS: [string, string][] = [
   ["/dashboard", "Painel"],
@@ -74,6 +91,8 @@ export default function AppHeader() {
           ))}
         </nav>
 
+        <div className="flex items-center gap-2">
+        <ThemeToggle />
         <div className="relative">
           <button type="button" onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-2 rounded-full border border-border bg-surface py-1 pl-1 pr-2.5 transition hover:bg-surface-2">
@@ -108,6 +127,7 @@ export default function AppHeader() {
               </div>
             </>
           )}
+        </div>
         </div>
       </div>
     </header>

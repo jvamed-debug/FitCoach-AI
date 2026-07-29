@@ -20,7 +20,7 @@ const INTENSITY_COLOR: Record<string, string> = {
   moderate:  "bg-blue-100 text-blue-700",
   hard:      "bg-orange-100 text-orange-700",
   very_hard: "bg-red-100 text-red-700",
-  rest:      "bg-gray-100 text-gray-500",
+  rest:      "bg-surface-2 text-muted-foreground",
 };
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -47,14 +47,14 @@ function SectionCard({ section }: { section: StructuredPlan["sections"][0] }) {
   const [open, setOpen] = useState(true);
   const t = section.targets ?? {};
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden">
+    <div className="border border-border rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-background hover:bg-surface-2 transition-colors text-left"
       >
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm text-gray-900">{section.name}</span>
-          <span className="text-xs text-gray-400">{section.duration_minutes}min</span>
+          <span className="font-medium text-sm text-foreground">{section.name}</span>
+          <span className="text-xs text-muted-foreground">{section.duration_minutes}min</span>
         </div>
         <div className="flex items-center gap-2">
           {t.power_pct_ftp && (
@@ -72,11 +72,11 @@ function SectionCard({ section }: { section: StructuredPlan["sections"][0] }) {
               RPE {t.rpe}
             </span>
           )}
-          <span className="text-gray-400 text-sm">{open ? "▲" : "▼"}</span>
+          <span className="text-muted-foreground text-sm">{open ? "▲" : "▼"}</span>
         </div>
       </button>
       {open && (
-        <div className="px-4 py-3 text-sm text-gray-600">
+        <div className="px-4 py-3 text-sm text-muted-foreground">
           {section.description}
         </div>
       )}
@@ -90,18 +90,18 @@ function ExerciseTable({ exercises }: { exercises: StructuredPlan["exercises"] }
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-gray-50 text-left">
-            <th className="px-3 py-2 text-xs font-medium text-gray-500">Exercício</th>
-            <th className="px-3 py-2 text-xs font-medium text-gray-500 text-center">Séries</th>
-            <th className="px-3 py-2 text-xs font-medium text-gray-500 text-center">Reps</th>
-            <th className="px-3 py-2 text-xs font-medium text-gray-500 text-center">Carga</th>
-            <th className="px-3 py-2 text-xs font-medium text-gray-500 text-center">Descanso</th>
+          <tr className="bg-background text-left">
+            <th className="px-3 py-2 text-xs font-medium text-muted-foreground">Exercício</th>
+            <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Séries</th>
+            <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Reps</th>
+            <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Carga</th>
+            <th className="px-3 py-2 text-xs font-medium text-muted-foreground text-center">Descanso</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {exercises.map((ex, i) => (
-            <tr key={i} className="hover:bg-gray-50">
-              <td className="px-3 py-2 font-medium text-gray-900">{ex.name}</td>
+            <tr key={i} className="hover:bg-background">
+              <td className="px-3 py-2 font-medium text-foreground">{ex.name}</td>
               <td className="px-3 py-2 text-center">{ex.sets}</td>
               <td className="px-3 py-2 text-center">{ex.reps || "—"}</td>
               <td className="px-3 py-2 text-center">{ex.load || "—"}</td>
@@ -119,23 +119,23 @@ function NutritionCard({ nutrition }: { nutrition: NutritionPlan | null }) {
   if (!nutrition) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
+    <div className="bg-surface rounded-xl border border-border">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-5 py-4 text-left"
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">🥗</span>
-          <span className="font-medium text-gray-900">Plano Nutricional</span>
+          <span className="font-medium text-foreground">Plano Nutricional</span>
           {nutrition.calories_target && (
-            <span className="text-xs text-gray-400">{nutrition.calories_target} kcal</span>
+            <span className="text-xs text-muted-foreground">{nutrition.calories_target} kcal</span>
           )}
         </div>
-        <span className="text-gray-400">{open ? "▲" : "▼"}</span>
+        <span className="text-muted-foreground">{open ? "▲" : "▼"}</span>
       </button>
 
       {open && (
-        <div className="px-5 pb-5 space-y-4 border-t border-gray-100 pt-4">
+        <div className="px-5 pb-5 space-y-4 border-t border-border pt-4">
           {/* Macros */}
           {(nutrition.carbs_g || nutrition.protein_g || nutrition.fat_g) && (
             <div className="grid grid-cols-3 gap-3">
@@ -166,8 +166,8 @@ function NutritionCard({ nutrition }: { nutrition: NutritionPlan | null }) {
               <div key={label} className="flex gap-2">
                 <span>{icon}</span>
                 <div>
-                  <span className="font-medium text-gray-700">{label}: </span>
-                  <span className="text-gray-600">{value}</span>
+                  <span className="font-medium text-foreground">{label}: </span>
+                  <span className="text-muted-foreground">{value}</span>
                 </div>
               </div>
             ))}
@@ -275,16 +275,16 @@ export default function RecommendationsPage() {
   const plan = rec?.structured_plan as StructuredPlan | null;
   const nutrition = rec?.nutrition_plan as NutritionPlan | null;
   const icon = rec ? (WORKOUT_ICON[rec.workout_type ?? ""] ?? "🏋️") : "";
-  const intensityBadge = plan ? (INTENSITY_COLOR[plan.intensity] ?? "bg-gray-100 text-gray-600") : "";
+  const intensityBadge = plan ? (INTENSITY_COLOR[plan.intensity] ?? "bg-surface-2 text-muted-foreground") : "";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Nav */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Recomendação de hoje</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-xl font-semibold text-foreground">Recomendação de hoje</h1>
+            <p className="text-sm text-muted-foreground">
               {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
@@ -302,13 +302,13 @@ export default function RecommendationsPage() {
 
         {/* Generating state */}
         {generating && !rec && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+          <div className="bg-surface rounded-2xl border border-border p-12 text-center">
             <div className="text-5xl mb-4 animate-pulse">🤖</div>
-            <p className="font-medium text-gray-900 mb-1">Gerando seu treino…</p>
-            <p className="text-sm text-gray-400">
+            <p className="font-medium text-foreground mb-1">Gerando seu treino…</p>
+            <p className="text-sm text-muted-foreground">
               A IA está analisando seu histórico, CTL/ATL/TSB e métricas do dia.
             </p>
-            <div className="mt-4 h-1 bg-gray-100 rounded-full overflow-hidden">
+            <div className="mt-4 h-1 bg-surface-2 rounded-full overflow-hidden">
               <div className="h-full bg-brand-500 animate-pulse w-3/4 rounded-full" />
             </div>
           </div>
@@ -328,17 +328,17 @@ export default function RecommendationsPage() {
         {rec && !generating && (
           <>
             {/* Header */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6">
+            <div className="bg-surface rounded-2xl border border-border p-6">
               <div className="flex items-start gap-4">
                 <div className="text-5xl">{icon}</div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-xl font-bold text-gray-900">{rec.title}</h2>
+                    <h2 className="text-xl font-bold text-foreground">{rec.title}</h2>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${intensityBadge}`}>
                       {plan?.intensity}
                     </span>
                   </div>
-                  <div className="flex gap-3 mt-1 text-sm text-gray-500 flex-wrap">
+                  <div className="flex gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
                     {plan?.duration_minutes ? (
                       <span>⏱ {plan.duration_minutes}min</span>
                     ) : null}
@@ -359,7 +359,7 @@ export default function RecommendationsPage() {
               {plan?.key_metrics_considered && plan.key_metrics_considered.length > 0 && (
                 <div className="mt-3 flex gap-2 flex-wrap">
                   {plan.key_metrics_considered.map((m, i) => (
-                    <span key={i} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{m}</span>
+                    <span key={i} className="text-xs bg-surface-2 text-muted-foreground px-2 py-0.5 rounded-full">{m}</span>
                   ))}
                 </div>
               )}
@@ -367,8 +367,8 @@ export default function RecommendationsPage() {
 
             {/* Sections */}
             {plan?.sections && plan.sections.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-5">
-                <h3 className="font-medium text-gray-900 mb-3">Estrutura do treino</h3>
+              <div className="bg-surface rounded-2xl border border-border p-5">
+                <h3 className="font-medium text-foreground mb-3">Estrutura do treino</h3>
                 <div className="space-y-2">
                   {plan.sections.map((s, i) => (
                     <SectionCard key={i} section={s} />
@@ -379,8 +379,8 @@ export default function RecommendationsPage() {
 
             {/* Exercises (strength) */}
             {plan?.exercises && plan.exercises.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-5">
-                <h3 className="font-medium text-gray-900 mb-3">Exercícios</h3>
+              <div className="bg-surface rounded-2xl border border-border p-5">
+                <h3 className="font-medium text-foreground mb-3">Exercícios</h3>
                 <ExerciseTable exercises={plan.exercises} />
               </div>
             )}
@@ -390,25 +390,25 @@ export default function RecommendationsPage() {
 
             {/* Rationale (collapsible) */}
             {rec.rationale && (
-              <div className="bg-white rounded-2xl border border-gray-200">
+              <div className="bg-surface rounded-2xl border border-border">
                 <button
                   onClick={() => setRationaleOpen((o) => !o)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left"
                 >
-                  <span className="font-medium text-gray-900">🧠 Por que este treino?</span>
-                  <span className="text-gray-400">{rationaleOpen ? "▲" : "▼"}</span>
+                  <span className="font-medium text-foreground">🧠 Por que este treino?</span>
+                  <span className="text-muted-foreground">{rationaleOpen ? "▲" : "▼"}</span>
                 </button>
                 {rationaleOpen && (
-                  <div className="px-5 pb-5 border-t border-gray-100 pt-4">
-                    <p className="text-sm text-gray-600 leading-relaxed">{rec.rationale}</p>
+                  <div className="px-5 pb-5 border-t border-border pt-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed">{rec.rationale}</p>
                   </div>
                 )}
               </div>
             )}
 
             {/* Feedback */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-5">
-              <h3 className="font-medium text-gray-900 mb-1">Feedback</h3>
+            <div className="bg-surface rounded-2xl border border-border p-5">
+              <h3 className="font-medium text-foreground mb-1">Feedback</h3>
               {feedbackSubmitted ? (
                 <div className="flex items-center gap-2 text-green-600 text-sm">
                   <span>✓</span>
@@ -416,7 +416,7 @@ export default function RecommendationsPage() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-500 mb-3">Como foi a recomendação de hoje?</p>
+                  <p className="text-sm text-muted-foreground mb-3">Como foi a recomendação de hoje?</p>
                   <StarRating value={rating} onChange={setRating} />
                   {rating > 0 && (
                     <div className="mt-3 space-y-3">

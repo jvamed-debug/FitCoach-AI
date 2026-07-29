@@ -78,12 +78,12 @@ export default function WorkoutsPage() {
   const totalPages = Math.ceil(total / perPage);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-background">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Treinos</h1>
-            <p className="text-sm text-gray-500">{total} treino{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}</p>
+            <h1 className="text-xl font-semibold text-foreground">Treinos</h1>
+            <p className="text-sm text-muted-foreground">{total} treino{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}</p>
           </div>
           <div className="flex items-center gap-3">
             {syncMsg && (
@@ -118,7 +118,7 @@ export default function WorkoutsPage() {
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 sportFilter === s
                   ? "bg-brand-600 text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                  : "bg-surface border border-border text-muted-foreground hover:bg-background"
               }`}
             >
               {s ? `${SPORT_ICON[s]} ${SPORT_LABEL[s]}` : "Todos"}
@@ -127,10 +127,10 @@ export default function WorkoutsPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400">Carregando…</div>
+          <div className="text-center py-16 text-muted-foreground">Carregando…</div>
         ) : workouts.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-gray-500 mb-4">Nenhum treino encontrado.</p>
+            <p className="text-muted-foreground mb-4">Nenhum treino encontrado.</p>
             <button onClick={handleSync} className="text-orange-500 font-medium hover:underline">
               Sincronizar com Strava →
             </button>
@@ -139,49 +139,49 @@ export default function WorkoutsPage() {
           <>
             <div className="space-y-3">
               {workouts.map((w) => (
-                <div key={w.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-gray-300 transition-colors">
+                <div key={w.id} className="bg-surface rounded-xl border border-border p-4 flex items-center gap-4 hover:border-gray-300 transition-colors">
                   <div className="text-2xl w-10 text-center flex-shrink-0">
                     {SPORT_ICON[w.sport_type] ?? "⚡"}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 truncate">{w.title ?? SPORT_LABEL[w.sport_type]}</p>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded capitalize flex-shrink-0">
+                      <p className="font-medium text-foreground truncate">{w.title ?? SPORT_LABEL[w.sport_type]}</p>
+                      <span className="text-xs text-muted-foreground bg-surface-2 px-1.5 py-0.5 rounded capitalize flex-shrink-0">
                         {w.source}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {w.start_time
                         ? format(parseISO(w.start_time), "EEEE, dd 'de' MMMM", { locale: ptBR })
                         : "—"}
                     </p>
                   </div>
-                  <div className="hidden md:flex items-center gap-6 text-sm text-gray-500 flex-shrink-0">
+                  <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground flex-shrink-0">
                     <div className="text-center">
-                      <p className="font-medium text-gray-900">{formatDuration(w.duration_seconds)}</p>
+                      <p className="font-medium text-foreground">{formatDuration(w.duration_seconds)}</p>
                       <p className="text-xs">duração</p>
                     </div>
                     {w.distance_meters && (
                       <div className="text-center">
-                        <p className="font-medium text-gray-900">{(w.distance_meters / 1000).toFixed(1)} km</p>
+                        <p className="font-medium text-foreground">{(w.distance_meters / 1000).toFixed(1)} km</p>
                         <p className="text-xs">distância</p>
                       </div>
                     )}
                     {w.tss !== null && w.tss !== undefined && (
                       <div className="text-center">
-                        <p className="font-medium text-gray-900">{w.tss.toFixed(0)}</p>
+                        <p className="font-medium text-foreground">{w.tss.toFixed(0)}</p>
                         <p className="text-xs">TSS</p>
                       </div>
                     )}
                     {w.normalized_power_watts && (
                       <div className="text-center">
-                        <p className="font-medium text-gray-900">{w.normalized_power_watts}W</p>
+                        <p className="font-medium text-foreground">{w.normalized_power_watts}W</p>
                         <p className="text-xs">NP</p>
                       </div>
                     )}
                     {w.avg_heart_rate && (
                       <div className="text-center">
-                        <p className="font-medium text-gray-900">{w.avg_heart_rate} bpm</p>
+                        <p className="font-medium text-foreground">{w.avg_heart_rate} bpm</p>
                         <p className="text-xs">FC média</p>
                       </div>
                     )}
@@ -193,12 +193,12 @@ export default function WorkoutsPage() {
             {totalPages > 1 && (
               <div className="flex justify-center gap-2 mt-5">
                 <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                  className="px-3 py-1.5 text-sm rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50">
+                  className="px-3 py-1.5 text-sm rounded border border-gray-300 disabled:opacity-40 hover:bg-background">
                   ← Anterior
                 </button>
-                <span className="px-3 py-1.5 text-sm text-gray-600">{page} / {totalPages}</span>
+                <span className="px-3 py-1.5 text-sm text-muted-foreground">{page} / {totalPages}</span>
                 <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                  className="px-3 py-1.5 text-sm rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50">
+                  className="px-3 py-1.5 text-sm rounded border border-gray-300 disabled:opacity-40 hover:bg-background">
                   Próxima →
                 </button>
               </div>

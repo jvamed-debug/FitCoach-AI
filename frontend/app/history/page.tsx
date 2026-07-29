@@ -162,13 +162,13 @@ export default function HistoryPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
+      <div className="bg-surface border-b border-border px-4 py-4 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-semibold text-gray-900">Histórico</h1>
-            <div className="text-sm text-gray-500">
+            <h1 className="text-lg font-semibold text-foreground">Histórico</h1>
+            <div className="text-sm text-muted-foreground">
               {items.length} sessões · TSS {totalTss.toFixed(0)}
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function HistoryPage() {
                 className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   days === d
                     ? "bg-sky-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-surface-2 text-muted-foreground hover:bg-muted"
                 }`}
               >
                 {label}
@@ -199,7 +199,7 @@ export default function HistoryPage() {
                 className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                   sportFilter === value
                     ? "bg-gray-800 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-surface-2 text-muted-foreground hover:bg-muted"
                 }`}
               >
                 {label}
@@ -216,7 +216,7 @@ export default function HistoryPage() {
         ) : items.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">🏖️</p>
-            <p className="text-gray-500">Nenhuma atividade encontrada neste período.</p>
+            <p className="text-muted-foreground">Nenhuma atividade encontrada neste período.</p>
             <Link href="/workouts" className="text-sky-600 text-sm hover:underline mt-2 inline-block">
               Ver todos os treinos →
             </Link>
@@ -225,7 +225,7 @@ export default function HistoryPage() {
           <div className="space-y-6">
             {Object.entries(grouped).map(([dateLabel, dayItems]) => (
               <div key={dateLabel}>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 capitalize">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 capitalize">
                   {dateLabel}
                 </p>
                 <div className="space-y-2">
@@ -254,13 +254,13 @@ function WorkoutRow({ item }: { item: Workout & { kind: "workout" } }) {
 
   return (
     <Link href={`/workouts/${item.id}`}>
-      <div className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center gap-3 hover:border-sky-200 hover:shadow-sm transition-all">
+      <div className="bg-surface rounded-xl border border-border px-4 py-3 flex items-center gap-3 hover:border-sky-200 hover:shadow-sm transition-all">
         <span className="text-2xl w-8 text-center">{icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 text-sm truncate">
+          <p className="font-medium text-foreground text-sm truncate">
             {item.title || label}
           </p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {formatDuration(item.duration_seconds)}
             {formatDistance(item.distance_meters)}
             {item.avg_power_watts ? ` · ${item.avg_power_watts}W` : ""}
@@ -269,9 +269,9 @@ function WorkoutRow({ item }: { item: Workout & { kind: "workout" } }) {
         </div>
         <div className="text-right flex-shrink-0">
           {item.tss != null && (
-            <p className="text-sm font-semibold text-gray-700">{item.tss.toFixed(0)}</p>
+            <p className="text-sm font-semibold text-foreground">{item.tss.toFixed(0)}</p>
           )}
-          <p className="text-xs text-gray-400">TSS</p>
+          <p className="text-xs text-muted-foreground">TSS</p>
         </div>
       </div>
     </Link>
@@ -282,20 +282,20 @@ function StrengthRow({ item }: { item: StrengthItem & { kind: "strength" } }) {
   const typeLabel = item.session_type ? (SESSION_TYPE_LABEL[item.session_type] ?? item.session_type) : "Musculação";
   return (
     <Link href={`/strength/${item.id}`}>
-      <div className="bg-white rounded-xl border border-gray-100 px-4 py-3 flex items-center gap-3 hover:border-sky-200 hover:shadow-sm transition-all">
+      <div className="bg-surface rounded-xl border border-border px-4 py-3 flex items-center gap-3 hover:border-sky-200 hover:shadow-sm transition-all">
         <span className="text-2xl w-8 text-center">💪</span>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 text-sm truncate">{typeLabel}</p>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="font-medium text-foreground text-sm truncate">{typeLabel}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {item.duration_minutes ? `${item.duration_minutes}min` : "—"}
             {item.rpe_overall ? ` · RPE ${item.rpe_overall}` : ""}
           </p>
         </div>
         <div className="text-right flex-shrink-0">
           {item.tss != null && (
-            <p className="text-sm font-semibold text-gray-700">{item.tss.toFixed(0)}</p>
+            <p className="text-sm font-semibold text-foreground">{item.tss.toFixed(0)}</p>
           )}
-          <p className="text-xs text-gray-400">TSS</p>
+          <p className="text-xs text-muted-foreground">TSS</p>
         </div>
       </div>
     </Link>

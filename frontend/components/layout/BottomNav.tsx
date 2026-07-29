@@ -32,7 +32,7 @@ export default function BottomNav() {
   const links = role === "admin" ? ADMIN_LINKS : ATHLETE_LINKS;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 safe-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface border-t border-border safe-bottom">
       <div className="flex">
         {links.map(({ href, icon, label }) => {
           const isActive = pathname === href || (href !== "/" && pathname.startsWith(href.split("?")[0]));
@@ -41,7 +41,7 @@ export default function BottomNav() {
               key={href}
               href={href}
               className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs font-medium transition-colors ${
-                isActive ? "text-sky-600" : "text-gray-400 hover:text-gray-600"
+                isActive ? "text-sky-600" : "text-muted-foreground hover:text-muted-foreground"
               }`}
             >
               <span className="text-xl leading-none">{icon}</span>

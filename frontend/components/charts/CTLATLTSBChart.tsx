@@ -33,14 +33,14 @@ const CustomTooltip = ({ active, payload, label }: {
 }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs">
-      <p className="font-medium text-gray-700 mb-2">
+    <div className="bg-surface border border-border rounded-lg shadow-lg p-3 text-xs">
+      <p className="font-medium text-foreground mb-2">
         {label ? format(parseISO(label), "dd 'de' MMMM", { locale: ptBR }) : ""}
       </p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex justify-between gap-4 mb-0.5">
           <span style={{ color: entry.color }} className="font-medium">{entry.name}</span>
-          <span className="text-gray-700 font-mono">
+          <span className="text-foreground font-mono">
             {entry.name === "TSB" && entry.value > 0 ? "+" : ""}
             {entry.value.toFixed(1)}
           </span>
@@ -64,11 +64,11 @@ export default function CTLATLTSBChart({ data }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-surface rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-medium text-gray-900">Carga de Treino</h3>
-          <p className="text-xs text-gray-400 mt-0.5">CTL · ATL · TSB</p>
+          <h3 className="font-medium text-foreground">Carga de Treino</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">CTL · ATL · TSB</p>
         </div>
         <div className="flex gap-1">
           {PERIODS.map(({ label, days }) => (
@@ -78,7 +78,7 @@ export default function CTLATLTSBChart({ data }: Props) {
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 period === days
                   ? "bg-brand-600 text-white"
-                  : "text-gray-500 hover:bg-gray-100"
+                  : "text-muted-foreground hover:bg-surface-2"
               }`}
             >
               {label}
@@ -143,7 +143,7 @@ export default function CTLATLTSBChart({ data }: Props) {
       </ResponsiveContainer>
 
       {/* Legend annotations */}
-      <div className="flex gap-4 mt-3 text-xs text-gray-400">
+      <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
         <span><span className="text-blue-500 font-medium">CTL</span> = Fitness (42d)</span>
         <span><span className="text-orange-500 font-medium">ATL</span> = Fadiga (7d)</span>
         <span><span className="text-green-500 font-medium">TSB</span> = Forma (CTL−ATL)</span>

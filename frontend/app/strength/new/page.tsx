@@ -114,13 +114,13 @@ export default function NewStrengthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-background">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600">
+          <button onClick={() => router.back()} className="text-sm text-muted-foreground hover:text-muted-foreground">
             ← Voltar
           </button>
-          <h1 className="text-xl font-semibold text-gray-900">Nova sessão de musculação</h1>
+          <h1 className="text-xl font-semibold text-foreground">Nova sessão de musculação</h1>
         </div>
       </div>
 
@@ -128,16 +128,16 @@ export default function NewStrengthPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
           {/* ── Session header ── */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-surface rounded-xl border border-border p-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Data *</label>
                 <input type="date" {...register("session_date")}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
                 {errors.session_date && <p className="text-xs text-red-600 mt-1">{errors.session_date.message}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de sessão</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Tipo de sessão</label>
                 <select {...register("session_type")}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
                   <option value="">Selecione</option>
@@ -147,22 +147,22 @@ export default function NewStrengthPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duração (min)</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Duração (min)</label>
                 <input type="number" {...register("duration_minutes")} min="1"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="60" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   RPE geral
-                  <span className="ml-1 text-xs text-gray-400">(1–10)</span>
+                  <span className="ml-1 text-xs text-muted-foreground">(1–10)</span>
                 </label>
                 <input type="number" {...register("rpe_overall")} min="1" max="10"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="7" />
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notas da sessão</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Notas da sessão</label>
                 <textarea {...register("notes")} rows={2} placeholder="Observações gerais…"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 resize-none" />
               </div>
@@ -171,7 +171,7 @@ export default function NewStrengthPage() {
             {/* TSS preview */}
             {estimatedTSS !== null && (
               <div className="mt-4 flex items-center gap-2 text-sm">
-                <span className="text-gray-500">TSS estimado:</span>
+                <span className="text-muted-foreground">TSS estimado:</span>
                 <span className="font-bold text-brand-700">{estimatedTSS.toFixed(0)}</span>
                 {estimatedTSS === 150 && <span className="text-xs text-orange-500">(máximo)</span>}
               </div>
@@ -179,9 +179,9 @@ export default function NewStrengthPage() {
           </div>
 
           {/* ── Exercises ── */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-surface rounded-xl border border-border p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-medium text-gray-900">Exercícios</h2>
+              <h2 className="font-medium text-foreground">Exercícios</h2>
               <button
                 type="button"
                 onClick={() => append({ exercise_name: "", sets: 3, reps: undefined, load_kg: undefined, rpe: undefined, notes: "" })}
@@ -192,16 +192,16 @@ export default function NewStrengthPage() {
             </div>
 
             {fields.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">
+              <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhum exercício adicionado. Clique em "+ Adicionar exercício" para começar.
               </p>
             ) : (
               <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="border border-gray-100 rounded-lg p-4 relative">
+                  <div key={field.id} className="border border-border rounded-lg p-4 relative">
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="flex-1 relative">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Nome do exercício *</label>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Nome do exercício *</label>
                         <input
                           {...register(`exercises.${index}.exercise_name`)}
                           className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand-500"
@@ -218,7 +218,7 @@ export default function NewStrengthPage() {
                           onBlur={() => setTimeout(() => setAutocomplete(null), 150)}
                         />
                         {autocomplete?.index === index && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          <div className="absolute z-10 w-full mt-1 bg-surface border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
                             {COMMON_EXERCISES
                               .filter((ex) => ex.toLowerCase().includes(autocomplete.query))
                               .slice(0, 6)
@@ -233,7 +233,7 @@ export default function NewStrengthPage() {
                                     if (el) { el.value = ex; el.dispatchEvent(new Event("input", { bubbles: true })); }
                                     setAutocomplete(null);
                                   }}
-                                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-background"
                                 >
                                   {ex}
                                 </button>
@@ -263,7 +263,7 @@ export default function NewStrengthPage() {
                         { name: `exercises.${index}.rpe`, label: "RPE", type: "number", placeholder: "8" },
                       ].map(({ name, label, type, placeholder }) => (
                         <div key={name}>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                          <label className="block text-xs font-medium text-muted-foreground mb-1">{label}</label>
                           <input
                             {...register(name as Parameters<typeof register>[0])}
                             type={type}

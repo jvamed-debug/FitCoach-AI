@@ -35,14 +35,14 @@ export default function WeeklyTSSBar({ thisWeek, lastWeek }: Props) {
     : null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-surface rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-900">TSS Semanal</h3>
+        <h3 className="font-medium text-foreground">TSS Semanal</h3>
         {pct !== null && (
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
             pct > 10 ? "bg-orange-100 text-orange-700" :
             pct > 0  ? "bg-green-100 text-green-700"   :
-                       "bg-gray-100 text-gray-500"
+                       "bg-surface-2 text-muted-foreground"
           }`}>
             {pct > 0 ? "+" : ""}{pct}% vs semana passada
           </span>
@@ -67,7 +67,7 @@ export default function WeeklyTSSBar({ thisWeek, lastWeek }: Props) {
       </ResponsiveContainer>
 
       {thisWeek && (
-        <div className="flex gap-4 mt-3 text-xs text-gray-500">
+        <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
           <span>🏋️ {thisWeek.workout_count} treinos</span>
           <span>⏱ {formatDuration(thisWeek.total_seconds)}</span>
           {thisWeek.total_meters > 0 && (

@@ -10,7 +10,7 @@ import type { CurrentPlan, BillingPlan } from "@/lib/types";
 // ── Plan display config ───────────────────────────────────────────────────────
 
 const PLAN_COLOR: Record<string, { ring: string; badge: string; btn: string }> = {
-  trial:   { ring: "ring-gray-200",  badge: "bg-gray-100 text-gray-600",   btn: "bg-gray-600 hover:bg-gray-700" },
+  trial:   { ring: "ring-border",  badge: "bg-surface-2 text-muted-foreground",   btn: "bg-gray-600 hover:bg-gray-700" },
   starter: { ring: "ring-sky-400",   badge: "bg-sky-100 text-sky-700",     btn: "bg-sky-600 hover:bg-sky-700" },
   pro:     { ring: "ring-violet-400",badge: "bg-violet-100 text-violet-700",btn: "bg-violet-600 hover:bg-violet-700" },
   elite:   { ring: "ring-amber-400", badge: "bg-amber-100 text-amber-700", btn: "bg-amber-600 hover:bg-amber-700" },
@@ -20,7 +20,7 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
   active:     { text: "Ativo",       cls: "bg-green-100 text-green-700" },
   trialing:   { text: "Trial",       cls: "bg-blue-100 text-blue-700" },
   past_due:   { text: "Pagamento atrasado", cls: "bg-red-100 text-red-700" },
-  canceled:   { text: "Cancelado",   cls: "bg-gray-100 text-gray-500" },
+  canceled:   { text: "Cancelado",   cls: "bg-surface-2 text-muted-foreground" },
   incomplete: { text: "Incompleto",  cls: "bg-yellow-100 text-yellow-700" },
 };
 
@@ -32,7 +32,7 @@ const STATUS_LABEL: Record<string, { text: string; cls: string }> = {
 // ?success=1 / ?canceled=1).
 export default function BillingPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-sm text-gray-400">Carregando…</div>}>
+    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Carregando…</div>}>
       <BillingPageContent />
     </Suspense>
   );
@@ -99,13 +99,13 @@ function BillingPageContent() {
   const isCurrentPlan = (key: string) => plan?.plan === key;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Assinatura & Billing</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Gerencie seu plano e pagamentos</p>
+            <h1 className="text-xl font-semibold text-foreground">Assinatura & Billing</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Gerencie seu plano e pagamentos</p>
           </div>
           <Link href="/admin/dashboard" className="text-sm text-sky-600 hover:text-sky-800">
             ← Painel
@@ -134,34 +134,34 @@ function BillingPageContent() {
 
         {/* Current plan card */}
         {loading ? (
-          <div className="h-36 rounded-xl bg-gray-100 animate-pulse" />
+          <div className="h-36 rounded-xl bg-surface-2 animate-pulse" />
         ) : plan && (
-          <div className={`bg-white rounded-xl ring-2 ${PLAN_COLOR[plan.plan]?.ring ?? "ring-gray-200"} p-6`}>
+          <div className={`bg-surface rounded-xl ring-2 ${PLAN_COLOR[plan.plan]?.ring ?? "ring-border"} p-6`}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${PLAN_COLOR[plan.plan]?.badge}`}>
                     {plan.label}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_LABEL[plan.status]?.cls ?? "bg-gray-100 text-gray-500"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_LABEL[plan.status]?.cls ?? "bg-surface-2 text-muted-foreground"}`}>
                     {STATUS_LABEL[plan.status]?.text ?? plan.status}
                   </span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-foreground">
                   {plan.price_brl === 0 ? "Gratuito" : `R$${plan.price_brl}/mês`}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
               </div>
 
               {/* Athlete usage */}
               <div className="text-right flex-shrink-0">
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-3xl font-bold text-foreground">
                   {plan.athlete_count}
-                  <span className="text-lg text-gray-400 font-normal">
+                  <span className="text-lg text-muted-foreground font-normal">
                     /{plan.athlete_limit >= 999_999 ? "∞" : plan.athlete_limit}
                   </span>
                 </p>
-                <p className="text-xs text-gray-400 mt-0.5">atletas ativos</p>
+                <p className="text-xs text-muted-foreground mt-0.5">atletas ativos</p>
                 {!plan.can_add_athlete && (
                   <p className="text-xs text-red-500 mt-1 font-medium">Limite atingido</p>
                 )}
@@ -171,7 +171,7 @@ function BillingPageContent() {
             {/* Usage bar */}
             {plan.athlete_limit < 999_999 && (
               <div className="mt-4">
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
                   <div
                     className={`h-2 rounded-full transition-all ${
                       plan.athlete_count / plan.athlete_limit > 0.9 ? "bg-red-500" :
@@ -186,7 +186,7 @@ function BillingPageContent() {
             {/* Manage / renewal */}
             <div className="mt-4 flex items-center justify-between">
               {plan.current_period_end && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   Próxima cobrança: {new Date(plan.current_period_end).toLocaleDateString("pt-BR")}
                 </p>
               )}
@@ -205,7 +205,7 @@ function BillingPageContent() {
 
         {/* Plan upgrade cards */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Planos disponíveis</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Planos disponíveis</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {plans.map((p) => {
               const isCurrent = isCurrentPlan(p.key);
@@ -213,8 +213,8 @@ function BillingPageContent() {
               return (
                 <div
                   key={p.key}
-                  className={`bg-white rounded-xl border-2 p-6 flex flex-col ${
-                    isCurrent ? "border-sky-400" : "border-gray-200"
+                  className={`bg-surface rounded-xl border-2 p-6 flex flex-col ${
+                    isCurrent ? "border-sky-400" : "border-border"
                   }`}
                 >
                   {isCurrent && (
@@ -222,12 +222,12 @@ function BillingPageContent() {
                       Plano atual
                     </span>
                   )}
-                  <h3 className="text-lg font-bold text-gray-900">{p.label}</h3>
-                  <p className="text-3xl font-extrabold text-gray-900 mt-1">
+                  <h3 className="text-lg font-bold text-foreground">{p.label}</h3>
+                  <p className="text-3xl font-extrabold text-foreground mt-1">
                     R${p.price_brl}
-                    <span className="text-sm font-normal text-gray-400">/mês</span>
+                    <span className="text-sm font-normal text-muted-foreground">/mês</span>
                   </p>
-                  <p className="text-sm text-gray-500 mt-2">{p.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2">{p.description}</p>
                   <ul className="mt-4 space-y-1.5 flex-1">
                     <Feature text={`Até ${p.athlete_limit >= 999_999 ? "atletas ilimitados" : `${p.athlete_limit} atletas`}`} />
                     <Feature text="Recomendações diárias por IA" />
@@ -254,8 +254,8 @@ function BillingPageContent() {
         </div>
 
         {/* FAQ */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="text-base font-semibold text-gray-900">Perguntas frequentes</h2>
+        <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Perguntas frequentes</h2>
           <FAQ q="Posso cancelar a qualquer momento?" a='Sim. Acesse "Gerenciar assinatura" para cancelar. Você manterá o acesso até o fim do período pago.' />
           <FAQ q="Meus atletas perdem acesso se eu cancelar?" a="Não imediatamente. Você terá acesso completo até o fim do ciclo de cobrança atual." />
           <FAQ q="Como funciona o trial?" a="Ao criar sua conta, você recebe 14 dias com até 3 atletas gratuitamente, sem cartão de crédito." />
@@ -268,7 +268,7 @@ function BillingPageContent() {
 
 function Feature({ text }: { text: string }) {
   return (
-    <li className="flex items-center gap-2 text-sm text-gray-700">
+    <li className="flex items-center gap-2 text-sm text-foreground">
       <span className="text-green-500 flex-shrink-0">✓</span>
       {text}
     </li>
@@ -278,15 +278,15 @@ function Feature({ text }: { text: string }) {
 function FAQ({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+    <div className="border-b border-border pb-3 last:border-0 last:pb-0">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-800 hover:text-gray-900"
+        className="flex items-center justify-between w-full text-left text-sm font-medium text-foreground hover:text-foreground"
       >
         {q}
-        <span className="text-gray-400 ml-3">{open ? "−" : "+"}</span>
+        <span className="text-muted-foreground ml-3">{open ? "−" : "+"}</span>
       </button>
-      {open && <p className="mt-2 text-sm text-gray-500">{a}</p>}
+      {open && <p className="mt-2 text-sm text-muted-foreground">{a}</p>}
     </div>
   );
 }

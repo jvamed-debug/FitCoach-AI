@@ -50,7 +50,7 @@ function DayPicker({
 
   return (
     <div>
-      <p className="text-xs font-medium text-gray-600 mb-1.5">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground mb-1.5">{label}</p>
       <div className="flex gap-1.5 flex-wrap">
         {DAYS.map((d) => (
           <button
@@ -60,7 +60,7 @@ function DayPicker({
             className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
               value.includes(d)
                 ? "bg-brand-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : "bg-surface-2 text-muted-foreground hover:bg-muted"
             }`}
           >
             {DAY_LABELS[d]}
@@ -138,13 +138,13 @@ export default function NewAthletePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-background">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-sm">
+          <button onClick={() => router.back()} className="text-muted-foreground hover:text-muted-foreground text-sm">
             ← Voltar
           </button>
-          <h1 className="text-xl font-semibold text-gray-900">Novo atleta</h1>
+          <h1 className="text-xl font-semibold text-foreground">Novo atleta</h1>
         </div>
       </div>
 
@@ -157,29 +157,29 @@ export default function NewAthletePage() {
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* ── Dados básicos ── */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="font-medium text-gray-900 mb-4">Dados básicos</h2>
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="font-medium text-foreground mb-4">Dados básicos</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome completo *</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Nome completo *</label>
                   <input {...register("name")} className="input-field" placeholder="João da Silva" />
                   {errors.name && <p className="field-error">{errors.name.message}</p>}
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">E-mail *</label>
                   <input {...register("email")} type="email" className="input-field" placeholder="atleta@email.com" />
                   {errors.email && <p className="field-error">{errors.email.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Telefone</label>
                   <input {...register("phone")} type="tel" className="input-field" placeholder="+55 11 99999-9999" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data de nascimento</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Data de nascimento</label>
                   <input {...register("birth_date")} type="date" className="input-field" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Sexo</label>
                   <select {...register("gender")} className="input-field">
                     <option value="">Selecione</option>
                     <option value="male">Masculino</option>
@@ -188,7 +188,7 @@ export default function NewAthletePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nível de condicionamento</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Nível de condicionamento</label>
                   <select {...register("fitness_level")} className="input-field">
                     <option value="">Selecione</option>
                     <option value="beginner">Iniciante</option>
@@ -198,19 +198,19 @@ export default function NewAthletePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Altura (cm)</label>
                   <input {...register("height_cm")} type="number" className="input-field" placeholder="175" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Peso (kg)</label>
                   <input {...register("weight_kg")} type="number" step="0.1" className="input-field" placeholder="70.0" />
                 </div>
               </div>
             </div>
 
             {/* ── Modalidades ── */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="font-medium text-gray-900 mb-4">Modalidades esportivas *</h2>
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="font-medium text-foreground mb-4">Modalidades esportivas *</h2>
               <div className="flex gap-2 flex-wrap mb-4">
                 <Controller
                   name="sport_modalities"
@@ -231,7 +231,7 @@ export default function NewAthletePage() {
                           <span className={`inline-block px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
                             field.value?.includes(m)
                               ? "bg-brand-600 text-white"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              : "bg-surface-2 text-muted-foreground hover:bg-muted"
                           }`}>
                             {m}
                           </span>
@@ -246,7 +246,7 @@ export default function NewAthletePage() {
               )}
               {watchedModalities.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Modalidade principal</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Modalidade principal</label>
                   <select {...register("primary_modality")} className="input-field w-auto">
                     <option value="">Selecione</option>
                     {watchedModalities.map((m) => (
@@ -258,8 +258,8 @@ export default function NewAthletePage() {
             </div>
 
             {/* ── Disponibilidade ── */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="font-medium text-gray-900 mb-4">Disponibilidade semanal</h2>
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="font-medium text-foreground mb-4">Disponibilidade semanal</h2>
               <div className="space-y-4">
                 <Controller
                   name="cycling_days"
@@ -279,28 +279,28 @@ export default function NewAthletePage() {
             </div>
 
             {/* ── Dados fisiológicos ── */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="font-medium text-gray-900 mb-1">Dados fisiológicos</h2>
-              <p className="text-xs text-gray-500 mb-4">Usados pela IA para cálculo de TSS e zonas de treino.</p>
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="font-medium text-foreground mb-1">Dados fisiológicos</h2>
+              <p className="text-xs text-muted-foreground mb-4">Usados pela IA para cálculo de TSS e zonas de treino.</p>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">FTP (watts)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">FTP (watts)</label>
                   <input {...register("ftp_watts")} type="number" className="input-field" placeholder="250" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">FC máxima (bpm)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">FC máxima (bpm)</label>
                   <input {...register("max_hr")} type="number" className="input-field" placeholder="185" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">FC repouso (bpm)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">FC repouso (bpm)</label>
                   <input {...register("resting_hr")} type="number" className="input-field" placeholder="55" />
                 </div>
               </div>
             </div>
 
             {/* ── Objetivo ── */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="font-medium text-gray-900 mb-4">Objetivo do atleta</h2>
+            <div className="bg-surface rounded-xl border border-border p-6">
+              <h2 className="font-medium text-foreground mb-4">Objetivo do atleta</h2>
               <textarea
                 {...register("goal")}
                 rows={3}

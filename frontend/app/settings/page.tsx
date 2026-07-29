@@ -79,26 +79,26 @@ export default function SettingsPage() {
     : null;
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">
+    <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
       Carregando…
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-background">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-xl font-semibold text-gray-900">Configurações</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Integrações e preferências da conta</p>
+          <h1 className="text-xl font-semibold text-foreground">Configurações</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Integrações e preferências da conta</p>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
 
         {/* ── Platform integrations ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-medium text-gray-900 mb-1">Plataformas de treino</h2>
-          <p className="text-xs text-gray-400 mb-5">
+        <div className="bg-surface rounded-xl border border-border p-6">
+          <h2 className="font-medium text-foreground mb-1">Plataformas de treino</h2>
+          <p className="text-xs text-muted-foreground mb-5">
             Conecte suas plataformas para importar treinos automaticamente.
           </p>
 
@@ -113,15 +113,15 @@ export default function SettingsPage() {
                 <div
                   key={provider}
                   className={`rounded-lg border p-4 flex items-center justify-between ${
-                    isConnected ? meta.color : "border-gray-200 bg-white"
+                    isConnected ? meta.color : "border-border bg-surface"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{meta.icon}</span>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">{meta.label}</p>
+                      <p className="font-medium text-foreground text-sm">{meta.label}</p>
                       {isConnected ? (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {conn?.last_sync_at
                             ? `Última sync: ${new Date(conn.last_sync_at).toLocaleDateString("pt-BR")}`
                             : "Conectado — sincronize para importar treinos"}
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                           )}
                         </p>
                       ) : (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {provider === "garmin"
                             ? "Via Strava relay (automático quando Strava conectado)"
                             : provider === "trainingpeaks"
@@ -143,7 +143,7 @@ export default function SettingsPage() {
 
                   <div>
                     {provider === "garmin" || provider === "trainingpeaks" ? (
-                      <span className="text-xs text-gray-400 italic">Em breve</span>
+                      <span className="text-xs text-muted-foreground italic">Em breve</span>
                     ) : isConnected ? (
                       <button
                         onClick={() => handleDisconnect(provider)}
@@ -168,12 +168,12 @@ export default function SettingsPage() {
         </div>
 
         {/* ── Apple Health ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-surface rounded-xl border border-border p-6">
           <div className="flex items-start gap-3 mb-4">
             <span className="text-xl">🍎</span>
             <div>
-              <h2 className="font-medium text-gray-900">Apple Health</h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <h2 className="font-medium text-foreground">Apple Health</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Configure um iOS Shortcut para enviar dados diários automaticamente.
               </p>
             </div>
@@ -182,8 +182,8 @@ export default function SettingsPage() {
           {appleHealthUrl && (
             <div className="space-y-3">
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">Seu URL único de ingestão:</p>
-                <code className="block bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 break-all">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Seu URL único de ingestão:</p>
+                <code className="block bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground break-all">
                   {appleHealthUrl}
                 </code>
               </div>
@@ -205,15 +205,15 @@ export default function SettingsPage() {
         </div>
 
         {/* ── LGPD ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="font-medium text-gray-900 mb-1">Privacidade e dados (LGPD)</h2>
-          <p className="text-xs text-gray-400 mb-4">
+        <div className="bg-surface rounded-xl border border-border p-6">
+          <h2 className="font-medium text-foreground mb-1">Privacidade e dados (LGPD)</h2>
+          <p className="text-xs text-muted-foreground mb-4">
             Conforme a Lei 13.709/2018, você tem direito de acessar, exportar ou excluir seus dados.
           </p>
           <div className="flex gap-3">
             <button
               onClick={() => api.post("/api/lgpd/export").then(() => alert("Solicitação enviada! Você receberá um e-mail em até 72 horas."))}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-muted-foreground hover:bg-background transition-colors"
             >
               Exportar meus dados
             </button>

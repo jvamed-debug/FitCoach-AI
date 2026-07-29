@@ -15,7 +15,7 @@ const TSB_CONFIG = {
   moderate: { label: "Neutro",   className: "bg-yellow-100 text-yellow-700 border border-yellow-200" },
   alert:    { label: "Fatigado", className: "bg-orange-100 text-orange-700 border border-orange-200" },
   critical: { label: "Crítico",  className: "bg-red-100 text-red-700 border border-red-200" },
-  unknown:  { label: "Sem dados",className: "bg-gray-100 text-gray-500 border border-gray-200" },
+  unknown:  { label: "Sem dados",className: "bg-surface-2 text-muted-foreground border border-border" },
 };
 
 const MODALITY_ICON: Record<string, string> = {
@@ -93,13 +93,13 @@ export default function AdminDashboardPage() {
   const onboardingCount = athletes.filter((a) => !a.onboarding_complete).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Painel do Coach</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h1 className="text-xl font-semibold text-foreground">Painel do Coach</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
               {athletes.length} atleta{athletes.length !== 1 ? "s" : ""} ativos
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-border">
           {(["athletes", "alerts"] as const).map((tab) => (
             <button
               key={tab}
@@ -161,7 +161,7 @@ export default function AdminDashboardPage() {
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
                   ? "border-sky-600 text-sky-700"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
               {tab === "athletes" ? "Atletas" : (
@@ -190,11 +190,11 @@ export default function AdminDashboardPage() {
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-36 rounded-xl bg-gray-100 animate-pulse" />
+                  <div key={i} className="h-36 rounded-xl bg-surface-2 animate-pulse" />
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <p className="text-sm text-gray-400 py-8 text-center">Nenhum atleta encontrado.</p>
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhum atleta encontrado.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filtered.map((athlete) => (
@@ -266,14 +266,14 @@ function AthleteCard({ athlete }: { athlete: AdminDashboardAthlete }) {
 
   return (
     <Link href={`/admin/athletes/${athlete.id}`}>
-      <div className="bg-white rounded-xl border border-gray-200 p-4 hover:border-sky-300 hover:shadow-sm transition-all">
+      <div className="bg-surface rounded-xl border border-border p-4 hover:border-sky-300 hover:shadow-sm transition-all">
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xl">{icon}</span>
             <div className="min-w-0">
-              <p className="font-medium text-gray-900 truncate text-sm">{athlete.name}</p>
-              <p className="text-xs text-gray-400 truncate">{athlete.email}</p>
+              <p className="font-medium text-foreground truncate text-sm">{athlete.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{athlete.email}</p>
             </div>
           </div>
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${tsbCfg.className}`}>
@@ -291,7 +291,7 @@ function AthleteCard({ athlete }: { athlete: AdminDashboardAthlete }) {
         </div>
 
         {/* Footer row */}
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>
             {athlete.days_since_last_workout != null
               ? athlete.days_since_last_workout === 0
@@ -303,7 +303,7 @@ function AthleteCard({ athlete }: { athlete: AdminDashboardAthlete }) {
             <span className="text-orange-500 font-medium">⚠ sem treino 3d+</span>
           )}
           {!athlete.onboarding_complete && (
-            <span className="text-gray-400">onboarding pendente</span>
+            <span className="text-muted-foreground">onboarding pendente</span>
           )}
         </div>
       </div>
@@ -315,10 +315,10 @@ function Metric({ label, value, highlight }: { label: string; value: string; hig
   const cls =
     highlight === "red"   ? "text-red-600 font-bold" :
     highlight === "green" ? "text-green-600 font-semibold" :
-                            "text-gray-800";
+                            "text-foreground";
   return (
-    <div className="bg-gray-50 rounded-lg py-1.5">
-      <p className="text-xs text-gray-400">{label}</p>
+    <div className="bg-background rounded-lg py-1.5">
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`text-sm font-semibold ${cls}`}>{value}</p>
     </div>
   );

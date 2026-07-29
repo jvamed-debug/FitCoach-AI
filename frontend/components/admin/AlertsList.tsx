@@ -101,7 +101,7 @@ export default function AlertsList({ limit = 50, unreadOnly = true, onRead }: Al
     return (
       <div className="space-y-2">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-16 rounded-lg bg-gray-100 animate-pulse" />
+          <div key={i} className="h-16 rounded-lg bg-surface-2 animate-pulse" />
         ))}
       </div>
     );
@@ -109,7 +109,7 @@ export default function AlertsList({ limit = 50, unreadOnly = true, onRead }: Al
 
   if (alerts.length === 0) {
     return (
-      <p className="text-sm text-gray-400 py-4 text-center">
+      <p className="text-sm text-muted-foreground py-4 text-center">
         Nenhum alerta {unreadOnly ? "não lido" : ""}.
       </p>
     );
@@ -142,12 +142,12 @@ export default function AlertsList({ limit = 50, unreadOnly = true, onRead }: Al
               <span className="text-lg leading-none mt-0.5">{icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-sm text-gray-900">{alert.title}</span>
+                  <span className="font-medium text-sm text-foreground">{alert.title}</span>
                   <span className={`inline-flex h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                  <span className="text-xs text-gray-400">{timeAgo(alert.created_at)}</span>
+                  <span className="text-xs text-muted-foreground">{timeAgo(alert.created_at)}</span>
                 </div>
                 {alert.body && (
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">{alert.body}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{alert.body}</p>
                 )}
                 {alert.athlete_id && (
                   <Link
@@ -161,7 +161,7 @@ export default function AlertsList({ limit = 50, unreadOnly = true, onRead }: Al
               <button
                 onClick={() => markRead(alert.id)}
                 title="Marcar como lido"
-                className="text-gray-300 hover:text-gray-600 text-xs flex-shrink-0 mt-0.5"
+                className="text-gray-300 hover:text-muted-foreground text-xs flex-shrink-0 mt-0.5"
               >
                 ✕
               </button>

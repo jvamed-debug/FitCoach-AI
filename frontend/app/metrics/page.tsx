@@ -39,7 +39,7 @@ function ScaleInput({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
       <div className="flex gap-1">
         {[1,2,3,4,5,6,7,8,9,10].map((n) => (
           <button
@@ -49,14 +49,14 @@ function ScaleInput({
             className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
               value === n
                 ? `${colorClass} text-white`
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                : "bg-surface-2 text-muted-foreground hover:bg-muted"
             }`}
           >
             {n}
           </button>
         ))}
       </div>
-      <p className="text-xs text-gray-400 mt-1">
+      <p className="text-xs text-muted-foreground mt-1">
         {value === 0 ? "Não informado" : `${value}/10`}
       </p>
     </div>
@@ -150,17 +150,17 @@ export default function MetricsPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">
+    <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
       Carregando…
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-background">
+      <div className="bg-surface border-b border-border px-6 py-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-xl font-semibold text-gray-900">Métricas Diárias</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-foreground">Métricas Diárias</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
@@ -169,9 +169,9 @@ export default function MetricsPage() {
       <div className="max-w-4xl mx-auto px-6 py-6 space-y-6">
 
         {/* ── Daily form ── */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-surface rounded-xl border border-border p-6">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-medium text-gray-900">Registrar métricas de hoje</h2>
+            <h2 className="font-medium text-foreground">Registrar métricas de hoje</h2>
             {saved && <span className="text-sm text-green-600 font-medium">✓ Salvo!</span>}
           </div>
 
@@ -183,7 +183,7 @@ export default function MetricsPage() {
               { label: "FC repouso",    value: restingHr,  setter: setRestingHr,  placeholder: "55",   type: "number" },
             ].map(({ label, value, setter, placeholder, type, step }) => (
               <div key={label}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <label className="block text-sm font-medium text-foreground mb-1">{label}</label>
                 <input
                   type={type}
                   step={step}
@@ -205,7 +205,7 @@ export default function MetricsPage() {
           </div>
 
           <div className="mb-5">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Observações</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -233,10 +233,10 @@ export default function MetricsPage() {
               { label: "HRV médio 7d",     value: trends["7d"]?.hrv_ms ? `${trends["7d"].hrv_ms}ms` : null, sub: "Heart Rate Variability", color: "text-blue-600" },
               { label: "Sono médio 7d",    value: trends["7d"]?.sleep_hours ? `${trends["7d"].sleep_hours}h` : null, sub: `qualidade: ${trends["7d"]?.sleep_quality ?? "—"}/10`, color: "text-purple-600" },
             ].map(({ label, value, sub, color }) => (
-              <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
-                <p className="text-xs text-gray-500 mb-1">{label}</p>
+              <div key={label} className="bg-surface rounded-xl border border-border p-4">
+                <p className="text-xs text-muted-foreground mb-1">{label}</p>
                 <p className={`text-2xl font-bold ${color}`}>{value ?? "—"}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
               </div>
             ))}
           </div>
@@ -244,8 +244,8 @@ export default function MetricsPage() {
 
         {/* ── HRV & Resting HR chart ── */}
         {chartData.length > 2 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="font-medium text-gray-900 mb-4">HRV e FC repouso (30 dias)</h3>
+          <div className="bg-surface rounded-xl border border-border p-5">
+            <h3 className="font-medium text-foreground mb-4">HRV e FC repouso (30 dias)</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -262,8 +262,8 @@ export default function MetricsPage() {
 
         {/* ── Sleep & wellbeing chart ── */}
         {chartData.length > 2 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="font-medium text-gray-900 mb-4">Bem-estar subjetivo (30 dias)</h3>
+          <div className="bg-surface rounded-xl border border-border p-5">
+            <h3 className="font-medium text-foreground mb-4">Bem-estar subjetivo (30 dias)</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

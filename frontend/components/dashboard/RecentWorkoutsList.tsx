@@ -23,17 +23,17 @@ interface Props { workouts: Workout[] }
 export default function RecentWorkoutsList({ workouts }: Props) {
   if (!workouts.length) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-medium text-gray-900 mb-3">Treinos recentes</h3>
-        <p className="text-sm text-gray-400">Nenhum treino ainda.</p>
+      <div className="bg-surface rounded-xl border border-border p-5">
+        <h3 className="font-medium text-foreground mb-3">Treinos recentes</h3>
+        <p className="text-sm text-muted-foreground">Nenhum treino ainda.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-surface rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-900">Treinos recentes</h3>
+        <h3 className="font-medium text-foreground">Treinos recentes</h3>
         <Link href="/workouts" className="text-xs text-brand-600 hover:underline">Ver todos →</Link>
       </div>
       <div className="space-y-2">
@@ -43,19 +43,19 @@ export default function RecentWorkoutsList({ workouts }: Props) {
               {SPORT_ICON[w.sport_type] ?? "⚡"}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-foreground truncate">
                 {w.title ?? w.sport_type}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 {w.start_time
                   ? format(parseISO(w.start_time), "EEE dd/MM", { locale: ptBR })
                   : "—"}
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-sm font-medium text-gray-700">{fmt(w.duration_seconds)}</p>
+              <p className="text-sm font-medium text-foreground">{fmt(w.duration_seconds)}</p>
               {w.tss != null && (
-                <p className="text-xs text-gray-400">{w.tss.toFixed(0)} TSS</p>
+                <p className="text-xs text-muted-foreground">{w.tss.toFixed(0)} TSS</p>
               )}
             </div>
           </div>

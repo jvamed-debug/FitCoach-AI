@@ -140,11 +140,11 @@ function OnboardingContent() {
 
   if (inviteToken && tokenValid === false) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center max-w-md w-full">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="bg-surface rounded-2xl border border-border p-8 text-center max-w-md w-full">
           <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Link de convite inválido</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-lg font-semibold text-foreground mb-2">Link de convite inválido</h2>
+          <p className="text-sm text-muted-foreground">
             Este link expirou (válido por 7 dias) ou já foi utilizado. Solicite um novo convite ao seu treinador.
           </p>
         </div>
@@ -153,11 +153,11 @@ function OnboardingContent() {
   }
 
   if (inviteToken && tokenValid === null) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">Validando convite…</div>;
+    return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Validando convite…</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -167,12 +167,12 @@ function OnboardingContent() {
             return (
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                  done ? "bg-green-500 text-white" : current ? "bg-brand-600 text-white" : "bg-gray-200 text-gray-500"
+                  done ? "bg-green-500 text-white" : current ? "bg-brand-600 text-white" : "bg-muted text-muted-foreground"
                 }`}>
                   {done ? "✓" : i + 1}
                 </div>
                 {i < steps.filter((s) => s !== "done").length - 1 && (
-                  <div className="w-8 h-0.5 bg-gray-200" />
+                  <div className="w-8 h-0.5 bg-muted" />
                 )}
               </div>
             );
@@ -181,25 +181,25 @@ function OnboardingContent() {
 
         {/* ── Step: Set password (invite flow) ── */}
         {step === "invite" && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">
+          <div className="bg-surface rounded-2xl border border-border p-8">
+            <h2 className="text-xl font-semibold text-foreground mb-1">
               Olá, {inviteInfo?.name.split(" ")[0]}! 👋
             </h2>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Crie sua senha para acessar o FitCoach AI.
             </p>
-            <p className="text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2 mb-5">
+            <p className="text-xs text-muted-foreground bg-background rounded-lg px-3 py-2 mb-5">
               Conta: <strong>{inviteInfo?.email}</strong>
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nova senha</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Nova senha</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Mínimo 8 caracteres" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Confirmar senha</label>
                 <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"
                   placeholder="Repita a senha" />
@@ -215,18 +215,18 @@ function OnboardingContent() {
 
         {/* ── Step: LGPD ── */}
         {step === "lgpd" && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">
+          <div className="bg-surface rounded-2xl border border-border p-8">
+            <h2 className="text-xl font-semibold text-foreground mb-1">
               Bem-vindo, {(profile as AthleteProfile)?.name?.split(" ")[0] ?? "atleta"}!
             </h2>
-            <p className="text-sm text-gray-500 mb-5">Leia e aceite os termos antes de continuar.</p>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 h-56 overflow-y-auto text-xs text-gray-600 whitespace-pre-wrap leading-relaxed mb-5">
+            <p className="text-sm text-muted-foreground mb-5">Leia e aceite os termos antes de continuar.</p>
+            <div className="rounded-lg border border-border bg-background p-4 h-56 overflow-y-auto text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed mb-5">
               {TERMS_TEXT}
             </div>
             <label className="flex items-start gap-3 cursor-pointer mb-6">
               <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-600" />
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-foreground">
                 Li e concordo com os Termos de Uso e autorizo o tratamento dos meus dados conforme a LGPD.
               </span>
             </label>
@@ -240,18 +240,18 @@ function OnboardingContent() {
 
         {/* ── Step: Profile ── */}
         {step === "profile" && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">Complete seu perfil</h2>
-            <p className="text-sm text-gray-500 mb-5">Opcional — ajuda a IA a personalizar os treinos.</p>
+          <div className="bg-surface rounded-2xl border border-border p-8">
+            <h2 className="text-xl font-semibold text-foreground mb-1">Complete seu perfil</h2>
+            <p className="text-sm text-muted-foreground mb-5">Opcional — ajuda a IA a personalizar os treinos.</p>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data de nascimento</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Data de nascimento</label>
                   <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Sexo</label>
                   <select value={gender} onChange={(e) => setGender(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
                     <option value="">Selecione</option>
@@ -263,18 +263,18 @@ function OnboardingContent() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Altura (cm)</label>
                   <input type="number" value={heightCm} onChange={(e) => setHeightCm(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" placeholder="175" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Peso (kg)</label>
                   <input type="number" step="0.1" value={weightKg} onChange={(e) => setWeightKg(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" placeholder="70.0" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Telefone</label>
                 <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" placeholder="+55 11 99999-9999" />
               </div>
@@ -286,7 +286,7 @@ function OnboardingContent() {
                 {loading ? "Salvando…" : "Salvar e continuar"}
               </button>
               <button onClick={() => setStep("done")}
-                className="px-4 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">
+                className="px-4 rounded-lg border border-gray-300 text-sm text-muted-foreground hover:bg-background">
                 Pular
               </button>
             </div>
@@ -295,13 +295,13 @@ function OnboardingContent() {
 
         {/* ── Step: Done ── */}
         {step === "done" && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
+          <div className="bg-surface rounded-2xl border border-border p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-3xl">🎯</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Tudo pronto!</h2>
-            <p className="text-sm text-gray-500 mb-2">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Tudo pronto!</h2>
+            <p className="text-sm text-muted-foreground mb-2">
               Seu perfil está configurado. Conecte o Strava para que a IA comece a gerar recomendações personalizadas.
             </p>
-            <p className="text-xs text-gray-400 mb-6">Você pode conectar plataformas depois em Configurações → Integrações.</p>
+            <p className="text-xs text-muted-foreground mb-6">Você pode conectar plataformas depois em Configurações → Integrações.</p>
             <div className="flex flex-col gap-3">
               <button
                 onClick={async () => {
@@ -329,7 +329,7 @@ function OnboardingContent() {
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">Carregando…</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Carregando…</div>}>
       <OnboardingContent />
     </Suspense>
   );
