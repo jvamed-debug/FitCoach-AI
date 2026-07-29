@@ -96,6 +96,8 @@ export interface Workout {
   avg_cadence: number | null;
   calories: number | null;
   tss: number | null;
+  /** Proveniência do TSS (§13): 'power' medida · 'hr' estimativa · 'stored' · 'strength'. */
+  tss_method: "power" | "hr" | "stored" | "strength" | null;
   if_score: number | null;
   hr_zones: Record<string, number> | null;
   power_zones: Record<string, number> | null;

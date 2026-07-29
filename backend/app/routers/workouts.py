@@ -74,6 +74,7 @@ def _workout_to_dict(w: Workout) -> dict:
         "avg_cadence": w.avg_cadence,
         "calories": w.calories,
         "tss": float(w.tss) if w.tss else None,
+        "tss_method": w.tss_method,
         "if_score": float(w.if_score) if w.if_score else None,
         "hr_zones": w.hr_zones,
         "power_zones": w.power_zones,

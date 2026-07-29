@@ -18,6 +18,18 @@ function fmt(seconds: number | null) {
   return h > 0 ? `${h}h${m.toString().padStart(2,"0")}` : `${m}min`;
 }
 
+// Proveniência do TSS (§13): distingue MEDIDA de ESTIMATIVA na própria exibição.
+// O "~" comunica aproximação; o title explica a fonte ao passar o mouse.
+function tssProvenance(method: Workout["tss_method"]) {
+  switch (method) {
+    case "power":    return { prefix: "",  title: "Medida — derivada de potência" };
+    case "hr":       return { prefix: "~", title: "Estimativa — derivada da FC (TRIMP)" };
+    case "strength": return { prefix: "~", title: "Estimativa — força por duração × RPE" };
+    case "stored":   return { prefix: "",  title: "Importada da plataforma de origem" };
+    default:         return { prefix: "",  title: "TSS" };
+  }
+}
+
 interface Props { workouts: Workout[] }
 
 export default function RecentWorkoutsList({ workouts }: Props) {
@@ -54,9 +66,14 @@ export default function RecentWorkoutsList({ workouts }: Props) {
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-sm font-medium text-foreground">{fmt(w.duration_seconds)}</p>
-              {w.tss != null && (
-                <p className="text-xs text-muted-foreground">{w.tss.toFixed(0)} TSS</p>
-              )}
+              {w.tss != null && (() => {
+                const p = tssProvenance(w.tss_method);
+                return (
+                  <p className="text-xs text-muted-foreground" title={p.title}>
+                    {p.prefix}{w.tss.toFixed(0)} TSS
+                  </p>
+                );
+              })()}
             </div>
           </div>
         ))}

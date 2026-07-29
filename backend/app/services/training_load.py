@@ -30,24 +30,33 @@ logger = logging.getLogger(__name__)
 
 # ── Per-session TSS helpers ───────────────────────────────────────────────────
 
-def _tss_for_workout(workout: Workout, athlete: Athlete) -> float:
-    """Return TSS for an endurance workout using power data or HR fallback."""
-    # Power-based (preferred)
+def _tss_for_workout(workout: Workout, athlete: Athlete) -> tuple[float, str | None]:
+    """
+    Return (TSS, method) for an endurance workout.
+
+    O método é a proveniência (§13): 'power' é uma MEDIDA; 'hr' é uma
+    ESTIMATIVA (TRIMP); 'stored' veio pronto da plataforma. A ordem de
+    preferência prioriza a fonte mais confiável disponível.
+    """
+    # Power-based (preferred) — MEDIDA
     if (
         workout.normalized_power_watts
         and athlete.ftp_watts
         and workout.duration_seconds
     ):
         try:
-            return calculate_tss_cycling(
-                workout.duration_seconds,
-                workout.normalized_power_watts,
-                athlete.ftp_watts,
+            return (
+                calculate_tss_cycling(
+                    workout.duration_seconds,
+                    workout.normalized_power_watts,
+                    athlete.ftp_watts,
+                ),
+                "power",
             )
         except ValueError:
             pass
 
-    # HR-based fallback
+    # HR-based fallback — ESTIMATIVA
     if (
         workout.avg_heart_rate
         and athlete.max_hr
@@ -55,31 +64,37 @@ def _tss_for_workout(workout: Workout, athlete: Athlete) -> float:
         and workout.duration_seconds
     ):
         try:
-            return calculate_tss_from_hr(
-                workout.duration_seconds,
-                workout.avg_heart_rate,
-                athlete.max_hr,
-                athlete.resting_hr,
+            return (
+                calculate_tss_from_hr(
+                    workout.duration_seconds,
+                    workout.avg_heart_rate,
+                    athlete.max_hr,
+                    athlete.resting_hr,
+                ),
+                "hr",
             )
         except ValueError:
             pass
 
     # Last resort: if TSS was stored directly (e.g. imported from TrainingPeaks)
     if workout.tss is not None:
-        return float(workout.tss)
+        return float(workout.tss), "stored"
 
-    return 0.0
+    return 0.0, None
 
 
-def _tss_for_strength(session: StrengthSession) -> float:
+def _tss_for_strength(session: StrengthSession) -> tuple[float, str | None]:
     if session.tss is not None:
-        return float(session.tss)
+        return float(session.tss), "stored"
     if session.duration_minutes and session.rpe_overall:
         try:
-            return calculate_strength_tss(session.duration_minutes, session.rpe_overall)
+            return (
+                calculate_strength_tss(session.duration_minutes, session.rpe_overall),
+                "strength",
+            )
         except ValueError:
             pass
-    return 0.0
+    return 0.0, None
 
 
 # ── Main service functions ────────────────────────────────────────────────────
@@ -147,15 +162,17 @@ async def recalculate_athlete_load(
         aware = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
         return aware.astimezone(tz).date()
 
-    # Build TSS series
+    # Build TSS series, registrando a proveniência (§13) em cada treino.
     tss_entries: list[dict] = []
     for w in workouts:
-        tss_val = _tss_for_workout(w, athlete)
+        tss_val, method = _tss_for_workout(w, athlete)
+        if w.tss_method != method:
+            w.tss_method = method  # persiste na mesma transação
         if tss_val > 0:
             tss_entries.append({"date": _local_date(w.start_time), "tss": tss_val})
 
     for s in strength_sessions:
-        tss_val = _tss_for_strength(s)
+        tss_val, _method = _tss_for_strength(s)
         if tss_val > 0:
             d = s.session_date.date() if isinstance(s.session_date, datetime) else s.session_date
             tss_entries.append({"date": d, "tss": tss_val})

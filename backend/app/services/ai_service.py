@@ -260,8 +260,14 @@ def format_athlete_context(ctx: AthleteContext) -> str:
 
     if ctx.recent_workouts:
         lines.append("=== RECENT WORKOUTS (last 14 sessions) ===")
+        # §13: cada TSS carrega sua proveniência para o agente ponderar confiança.
+        _PROV = {"power": "medida", "hr": "estimativa-FC", "strength": "estimativa-RPE", "stored": "importado"}
         for w in ctx.recent_workouts[:14]:
-            tss = f"  TSS={w.get('tss', '?'):.0f}" if w.get('tss') else ""
+            if w.get('tss'):
+                prov = _PROV.get(w.get('tss_method'))
+                tss = f"  TSS={w['tss']:.0f}" + (f"[{prov}]" if prov else "")
+            else:
+                tss = ""
             np  = f"  NP={w.get('normalized_power_watts')}W" if w.get('normalized_power_watts') else ""
             hr  = f"  avgHR={w.get('avg_heart_rate')}bpm" if w.get('avg_heart_rate') else ""
             adherence = f"  [ADHERENCE: {w.get('adherence_hint')}]" if w.get('adherence_hint') else ""
@@ -676,6 +682,7 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
             "start_time": w.start_time.isoformat() if w.start_time else None,
             "duration_seconds": w.duration_seconds,
             "tss": float(w.tss) if w.tss else None,
+            "tss_method": w.tss_method,
             "normalized_power_watts": w.normalized_power_watts,
             "avg_heart_rate": w.avg_heart_rate,
             "title": w.title,

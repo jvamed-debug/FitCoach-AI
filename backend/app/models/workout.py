@@ -27,6 +27,13 @@ class Workout(Base):
     avg_cadence = Column(Integer)
     calories = Column(Integer)
     tss = Column(Numeric(8, 2))
+    # Proveniência do TSS (§13 do contrato do agente): distingue MEDIDA de ESTIMATIVA.
+    #   'power'    → derivado de potência normalizada + FTP (medida confiável)
+    #   'hr'       → estimado por FC via TRIMP (inferência, menos preciso)
+    #   'stored'   → importado pronto da plataforma de origem (ex.: TrainingPeaks)
+    #   'strength' → carga de força por duração × RPE (estimativa empírica)
+    #   None       → sem dados suficientes para atribuir TSS
+    tss_method = Column(String(20))
     if_score = Column(Numeric(5, 3))
     hr_zones = Column(JSONVariant)
     power_zones = Column(JSONVariant)
