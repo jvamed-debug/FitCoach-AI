@@ -10,7 +10,18 @@ import DailyRecommendationCard from "@/components/dashboard/DailyRecommendationC
 import WeeklyTSSBar from "@/components/dashboard/WeeklyTSSBar";
 import RecentWorkoutsList from "@/components/dashboard/RecentWorkoutsList";
 import DailyMetricsCard from "@/components/dashboard/DailyMetricsCard";
+import InfoTip from "@/components/ui/InfoTip";
 import type { TrainingLoad, Workout, DailyMetrics, AIRecommendation, AthleteProfile } from "@/lib/types";
+
+// Tooltips educativos por métrica (§16 do contrato do agente). Descrevem o que
+// a métrica É, sem prometer avaliação de saúde nem predição.
+const TIP = {
+  tsb: "Forma (TSB) = diferença entre Fitness e Fadiga, pela convenção temporal configurada. Na configuração inicial usa os valores do dia anterior. Positivo tende a frescor; negativo, a cansaço acumulado.",
+  ctl: "Fitness (CTL) = componente de carga de resposta lenta, média exponencial de ~42 dias do seu TSS. Sobe devagar e cai devagar; representa a base de condicionamento.",
+  atl: "Fadiga (ATL) = componente de carga de resposta rápida, média exponencial de ~7 dias do seu TSS. Reage rápido às sessões recentes.",
+  tss: "TSS resume uma sessão pela combinação de duração e intensidade relativa ao limiar. Uma hora exatamente no limiar equivale a 100. Com potência é uma medida; sem potência, uma estimativa por FC.",
+  pmc: "PMC (Performance Management Chart) reúne TSS, Fitness, Fadiga e Forma ao longo do tempo. Interprete a tendência das curvas, não um número isolado.",
+} as const;
 
 interface CurrentLoad {
   ctl: number; atl: number; tsb: number;
@@ -100,7 +111,9 @@ export default function DashboardPage() {
                 className="rounded-2xl border bg-surface p-5"
                 style={{ borderColor: currentLoad && tsb < -25 ? "hsl(var(--critical))" : "hsl(var(--border))" }}
               >
-                <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Forma · TSB</div>
+                <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  Forma · TSB <InfoTip text={TIP.tsb} />
+                </div>
                 <div className="tnum mt-1.5 text-4xl font-bold leading-none" style={{ color: tsbState.color }}>
                   {currentLoad ? `${tsb > 0 ? "+" : ""}${tsb.toFixed(1)}` : "—"}
                 </div>
@@ -113,11 +126,13 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <MetricCard k="Fitness · CTL" value={currentLoad?.ctl} sub="média 42 dias" color="hsl(var(--ctl))" />
-              <MetricCard k="Fadiga · ATL" value={currentLoad?.atl} sub="média 7 dias" color="hsl(var(--atl))" />
+              <MetricCard k="Fitness · CTL" value={currentLoad?.ctl} sub="média 42 dias" color="hsl(var(--ctl))" tip={TIP.ctl} />
+              <MetricCard k="Fadiga · ATL" value={currentLoad?.atl} sub="média 7 dias" color="hsl(var(--atl))" tip={TIP.atl} />
 
               <div className="rounded-2xl border border-border bg-surface p-5">
-                <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">TSS semanal</div>
+                <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  TSS semanal <InfoTip text={TIP.tss} />
+                </div>
                 <div className="tnum mt-1.5 text-4xl font-bold leading-none text-foreground">
                   {weekStats?.this_week.total_tss.toFixed(0) ?? "—"}
                 </div>
@@ -132,8 +147,8 @@ export default function DashboardPage() {
             {/* Gráfico de carga (PMC) */}
             {loadHistory.length > 1 ? (
               <div className="rounded-2xl border border-border bg-surface p-5">
-                <div className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                  Carga de treino · 90 dias
+                <div className="mb-3 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  Carga de treino · 90 dias <InfoTip text={TIP.pmc} />
                 </div>
                 <CTLATLTSBChart data={loadHistory} />
               </div>
@@ -173,10 +188,12 @@ export default function DashboardPage() {
   );
 }
 
-function MetricCard({ k, value, sub, color }: { k: string; value?: number; sub: string; color: string }) {
+function MetricCard({ k, value, sub, color, tip }: { k: string; value?: number; sub: string; color: string; tip?: string }) {
   return (
     <div className="rounded-2xl border border-border bg-surface p-5">
-      <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{k}</div>
+      <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+        {k} {tip && <InfoTip text={tip} />}
+      </div>
       <div className="tnum mt-1.5 text-4xl font-bold leading-none" style={{ color }}>
         {value != null ? value.toFixed(0) : "—"}
       </div>
