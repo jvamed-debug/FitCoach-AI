@@ -22,12 +22,13 @@ interface WeekStats {
   total_meters: number; total_tss: number;
 }
 
+// Estado do TSB → cor semântica (via CSS var) + rótulo. A cor É a informação.
 const TSB_STATE = (tsb: number) => {
-  if (tsb < -25) return { label: "Crítico",     bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200" };
-  if (tsb < -10) return { label: "Fatigado",    bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" };
-  if (tsb < 5)   return { label: "Neutro",      bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" };
-  if (tsb < 15)  return { label: "Fresco",      bg: "bg-green-50",  text: "text-green-700",  border: "border-green-200" };
-  return               { label: "Muito fresco", bg: "bg-teal-50",   text: "text-teal-700",   border: "border-teal-200" };
+  if (tsb < -25) return { label: "Crítico · descanso",  color: "hsl(var(--critical))" };
+  if (tsb < -10) return { label: "Fatigado",            color: "hsl(var(--fatigued))" };
+  if (tsb < 5)   return { label: "Neutro",              color: "hsl(var(--muted-foreground))" };
+  if (tsb < 15)  return { label: "Pronto p/ qualidade", color: "hsl(var(--tsb))" };
+  return               { label: "Muito fresco",         color: "hsl(var(--tsb))" };
 };
 
 export default function DashboardPage() {
@@ -75,90 +76,84 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
-        {/* Greeting + critical alert */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Olá, {athlete.name.split(" ")[0]}! 👋
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-            </p>
-          </div>
-          {tsb < -25 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700 flex items-center gap-2">
-              <span>⚠️</span>
-              <span>TSB crítico ({tsb.toFixed(1)}) — descanso recomendado</span>
-            </div>
-          )}
+        {/* Saudação */}
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground first-letter:uppercase">
+            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+          <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-foreground">
+            Bom treino, {athlete.name.split(" ")[0]}.
+          </h1>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-4 gap-4">
-            {[1,2,3,4].map((i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse h-24" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-28 animate-pulse rounded-2xl border border-border bg-surface" />
             ))}
           </div>
         ) : (
           <>
-            {/* KPI row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {/* TSB — colored by state */}
-              <div className={`rounded-xl border ${tsbState.border} ${tsbState.bg} p-4`}>
-                <p className="text-xs text-gray-500 mb-1">Forma (TSB)</p>
-                <p className={`text-3xl font-bold ${tsbState.text}`}>
+            {/* Faixa de métricas de carga */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div
+                className="rounded-2xl border bg-surface p-5"
+                style={{ borderColor: currentLoad && tsb < -25 ? "hsl(var(--critical))" : "hsl(var(--border))" }}
+              >
+                <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Forma · TSB</div>
+                <div className="tnum mt-1.5 text-4xl font-bold leading-none" style={{ color: tsbState.color }}>
                   {currentLoad ? `${tsb > 0 ? "+" : ""}${tsb.toFixed(1)}` : "—"}
-                </p>
-                <p className={`text-xs mt-1 font-medium ${tsbState.text}`}>{tsbState.label}</p>
+                </div>
+                <div
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                  style={{ color: tsbState.color, background: `color-mix(in srgb, ${tsbState.color} 14%, transparent)` }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: tsbState.color }} />
+                  {tsbState.label}
+                </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <p className="text-xs text-gray-500 mb-1">CTL (Fitness)</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {currentLoad?.ctl.toFixed(1) ?? "—"}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">42 dias</p>
-              </div>
+              <MetricCard k="Fitness · CTL" value={currentLoad?.ctl} sub="média 42 dias" color="hsl(var(--ctl))" />
+              <MetricCard k="Fadiga · ATL" value={currentLoad?.atl} sub="média 7 dias" color="hsl(var(--atl))" />
 
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <p className="text-xs text-gray-500 mb-1">ATL (Fadiga)</p>
-                <p className="text-3xl font-bold text-orange-500">
-                  {currentLoad?.atl.toFixed(1) ?? "—"}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">7 dias</p>
-              </div>
-
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <p className="text-xs text-gray-500 mb-1">TSS semanal</p>
-                <p className="text-3xl font-bold text-gray-800">
+              <div className="rounded-2xl border border-border bg-surface p-5">
+                <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">TSS semanal</div>
+                <div className="tnum mt-1.5 text-4xl font-bold leading-none text-foreground">
                   {weekStats?.this_week.total_tss.toFixed(0) ?? "—"}
-                </p>
+                </div>
                 {weekStats && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    anterior: {weekStats.last_week.total_tss.toFixed(0)}
-                  </p>
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    anterior: <span className="tnum">{weekStats.last_week.total_tss.toFixed(0)}</span>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* CTL/ATL/TSB Chart */}
+            {/* Gráfico de carga (PMC) */}
             {loadHistory.length > 1 ? (
-              <CTLATLTSBChart data={loadHistory} />
+              <div className="rounded-2xl border border-border bg-surface p-5">
+                <div className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  Carga de treino · 90 dias
+                </div>
+                <CTLATLTSBChart data={loadHistory} />
+              </div>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-                <p className="text-gray-400 text-sm">Dados insuficientes para o gráfico.</p>
-                <p className="text-xs text-gray-300 mt-1">Conecte o Strava ou registre treinos para começar.</p>
+              <div className="rounded-2xl border border-border bg-surface p-10 text-center">
+                <p className="text-sm text-muted-foreground">Dados insuficientes para o gráfico de carga (PMC).</p>
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  Conecte o Strava ou registre um treino para começar a construir seu histórico.
+                </p>
               </div>
             )}
 
-            {/* Middle row: Recommendation + Metrics */}
-            <div className="grid grid-cols-2 gap-5">
+            {/* Recomendação + Métricas */}
+            <div className="grid gap-5 lg:grid-cols-2">
               <DailyRecommendationCard rec={todayRec} loading={false} />
               <DailyMetricsCard metrics={todayMetrics} loading={false} />
             </div>
 
-            {/* Bottom row: Weekly TSS + Recent Workouts */}
-            <div className="grid grid-cols-2 gap-5">
+            {/* TSS semanal + Treinos recentes */}
+            <div className="grid gap-5 lg:grid-cols-2">
               <WeeklyTSSBar thisWeek={weekStats?.this_week ?? null} lastWeek={weekStats?.last_week ?? null} />
               <RecentWorkoutsList workouts={recentWorkouts} />
             </div>
@@ -168,6 +163,18 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function MetricCard({ k, value, sub, color }: { k: string; value?: number; sub: string; color: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-5">
+      <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{k}</div>
+      <div className="tnum mt-1.5 text-4xl font-bold leading-none" style={{ color }}>
+        {value != null ? value.toFixed(0) : "—"}
+      </div>
+      <div className="mt-3 text-xs text-muted-foreground">{sub}</div>
     </div>
   );
 }
@@ -219,27 +226,25 @@ function MonthlyReportCard() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between gap-4">
+    <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-surface p-5 sm:flex-row sm:items-center">
       <div>
-        <p className="font-medium text-gray-900 text-sm">Relatório mensal — {label}</p>
-        <p className="text-xs text-gray-400 mt-0.5">
-          PDF com treinos, CTL/ATL/TSB, métricas e aderência
-        </p>
+        <p className="text-sm font-semibold text-foreground">Relatório mensal — {label}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">PDF com treinos, CTL/ATL/TSB, métricas e aderência</p>
       </div>
-      <div className="flex gap-2 flex-shrink-0">
+      <div className="flex flex-shrink-0 gap-2">
         <button
           onClick={downloadPdf}
           disabled={loading}
-          className="px-3 py-1.5 text-xs font-medium bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
+          className="rounded-lg bg-accent px-3.5 py-2 text-xs font-semibold text-accent-foreground transition hover:brightness-110 disabled:opacity-50"
         >
-          {loading ? "..." : "⬇ Baixar PDF"}
+          {loading ? "…" : "Baixar PDF"}
         </button>
         <button
           onClick={sendByEmail}
           disabled={loading || sent}
-          className="px-3 py-1.5 text-xs font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+          className="rounded-lg border border-border px-3.5 py-2 text-xs font-semibold text-foreground transition hover:bg-surface-2 disabled:opacity-50"
         >
-          {sent ? "✓ Enviado" : "📧 Enviar por e-mail"}
+          {sent ? "✓ Enviado" : "Enviar por e-mail"}
         </button>
       </div>
     </div>
