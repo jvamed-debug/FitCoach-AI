@@ -160,6 +160,12 @@ export default function DashboardPage() {
 
             {/* Quick actions */}
             <MonthlyReportCard />
+
+            {/* Aviso fixo (§16 do contrato do agente) */}
+            <p className="px-2 pt-2 text-center text-[11px] leading-relaxed text-muted-foreground/70">
+              Valores de referência por nível de atleta são convenções de treinamento sem validação
+              científica universal. As métricas descrevem carga registrada — não avaliam saúde nem predizem lesão.
+            </p>
           </>
         )}
       </div>

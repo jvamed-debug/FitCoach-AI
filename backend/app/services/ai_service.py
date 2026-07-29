@@ -28,6 +28,7 @@ from app.models.athlete import Athlete
 from app.models.metric import DailyMetric
 from app.models.workout import Workout
 from app.models.strength import StrengthSession
+from app.models.training_load import TrainingLoad
 from app.services.training_load import get_current_load
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,10 @@ class AthleteContext:
     is_new_athlete: bool = False
     detraining_detected: bool = False
     metrics_missing: bool = False
+    # Convergência da série de CTL (§8.9 da spec): CTL só é confiável com
+    # histórico longo; abaixo disso está subestimado por construção.
+    ctl_converged: bool = True
+    history_days: int = 0
     target_event: str | None = None
     weeks_to_event: int | None = None
 
@@ -125,6 +130,8 @@ Generate ONE specific training session for TOMORROW, plus a nutrition plan for t
 - Never attribute causality to data you do not have. Sleep, nutrition and stress are not captured by TSS unless explicitly provided.
 - Persistent fatigue, performance decline or somatic symptoms may have causes outside training. Surface the pattern to the coach and stop — medical referral is a human decision, never yours.
 - Prefer the athlete's actual series values over generic ranges; when you must use a generic range, label it as a convention.
+- SOURCE PROVENANCE: state where a metric comes from. TSS derived from POWER (NP/FTP) is reliable; TSS ESTIMATED FROM HEART RATE (TRIMP) is an estimate/convention, not an official value — say so and do not treat it as authoritative. Never invent missing values.
+- CTL CONVERGENCE: if the athlete's history is short (context marks CTL as NOT converged, i.e. under ~90 days, and especially under 42), CTL is underestimated by construction. Do NOT anchor progression or high-load decisions on CTL in that case — say the fitness baseline is not yet reliable and prefer subjective metrics and recent sessions.
 
 ## TSB DECISION RULES (operational convention — used to choose the session, not a scientific claim)
 - TSB < -25 → prescribe REST or MOBILITY ONLY. No exceptions.
@@ -225,6 +232,9 @@ def format_athlete_context(ctx: AthleteContext) -> str:
         f"TSB (Form):         {ctx.tsb:+.1f}  → state: {_tsb_state(ctx.tsb)}",
         f"Daily TSS:          {ctx.daily_tss:.1f}",
         f"Weekly TSS:         {ctx.weekly_tss:.1f}",
+        f"Load history:       {ctx.history_days} days"
+        + ("" if ctx.ctl_converged
+           else "  → CTL NOT CONVERGED (underestimated; do not anchor decisions on CTL)"),
         f"Is new athlete:     {ctx.is_new_athlete}",
         f"Detraining detected:{ctx.detraining_detected}",
         "",
@@ -750,6 +760,13 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
             days_gap = (today - date.fromisoformat(last_date)).days
             detraining = days_gap > 10
 
+    # Convergência do CTL: nº de dias de histórico na série de carga (§8.9).
+    hist_result = await db.execute(
+        select(func.count()).select_from(TrainingLoad).where(TrainingLoad.athlete_id == athlete_id)
+    )
+    history_days = int(hist_result.scalar() or 0)
+    ctl_converged = history_days >= 90
+
     return AthleteContext(
         name=athlete.name,
         age=age,
@@ -775,4 +792,6 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
         is_new_athlete=is_new,
         detraining_detected=detraining,
         metrics_missing=(latest_metrics is None),
+        ctl_converged=ctl_converged,
+        history_days=history_days,
     )
