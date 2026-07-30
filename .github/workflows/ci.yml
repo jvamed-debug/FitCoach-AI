@@ -72,8 +72,20 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Lint with ruff (if available)
-        run: pip install ruff && ruff check app/ --select=E,W,F --ignore=E501 || true
+      - name: Install ruff
+        run: pip install ruff
+
+      # BLOQUEANTE: F821 (nome indefinido) e F822 não são estilo — são crashes em
+      # runtime que compileall e os testes de unidade não pegam. Um `today` usado
+      # antes da atribuição derrubou a geração de recomendação inteira em
+      # produção enquanto a CI passava verde, porque o lint rodava com `|| true`.
+      # F811 fica de fora: dá falso positivo em campos Pydantic que sombreiam um
+      # import apenas dentro do corpo da classe.
+      - name: Lint — erros fatais (bloqueante)
+        run: ruff check app/ scripts/ --select=F821,F822
+
+      - name: Lint — estilo (informativo)
+        run: ruff check app/ --select=E,W,F --ignore=E501 || true
 
       - name: Run tests
         run: pytest tests/ -v --tb=short --cov=app --cov-report=term-missing

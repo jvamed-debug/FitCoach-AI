@@ -780,6 +780,10 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
     if not athlete:
         return None
 
+    # Definido aqui porque o bloco de aderência abaixo já o usa; atribuí-lo só
+    # junto das métricas do dia deixava a função inteira em UnboundLocalError.
+    today = date.today()
+
     # Training load
     load = await get_current_load(db, athlete_id) or {"ctl": 0, "atl": 0, "tsb": 0, "daily_tss": 0, "weekly_tss": 0}
 
@@ -843,7 +847,6 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
     ]
 
     # Today's metrics
-    today = date.today()
     metrics_result = await db.execute(
         select(DailyMetric).where(
             DailyMetric.athlete_id == athlete_id,

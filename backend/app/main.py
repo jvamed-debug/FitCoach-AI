@@ -8,6 +8,14 @@ import time
 from app.config import settings
 from app.services.scheduler import start_scheduler, stop_scheduler
 
+# Logging vem primeiro: o bloco do Sentry abaixo já registra em log, e defini-lo
+# depois deixava esse caminho com NameError sempre que SENTRY_DSN existisse.
+logging.basicConfig(
+    level=logging.DEBUG if settings.app_env == "development" else logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 # ── Sentry (initialise before app creation) ───────────────────────────────────
 if settings.sentry_dsn:
     import sentry_sdk
@@ -21,12 +29,6 @@ if settings.sentry_dsn:
         send_default_pii=False,
     )
     logger.info("Sentry initialised (env=%s, traces=%.0f%%)", settings.app_env, settings.sentry_traces_sample_rate * 100)
-
-logging.basicConfig(
-    level=logging.DEBUG if settings.app_env == "development" else logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
-)
-logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
