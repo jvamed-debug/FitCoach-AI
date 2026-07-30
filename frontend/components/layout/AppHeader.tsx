@@ -28,6 +28,7 @@ const ATHLETE_LINKS: [string, string][] = [
   ["/workouts", "Treinos"],
   ["/strength/new", "Musculação"],
   ["/recommendations", "Recomendações"],
+  ["/analysis", "Análise"],
   ["/metrics", "Métricas"],
 ];
 

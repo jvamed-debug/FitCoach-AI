@@ -205,6 +205,41 @@ export interface NutritionPlan {
   notes: string | null;
 }
 
+// ── Agente analítico (§13–15) ─────────────────────────────────────────────────
+
+export interface CoachOption {
+  option: string;
+  rationale: string;
+  tradeoff: string;
+}
+
+export interface MetricProvenance {
+  metric: string;
+  source: string;
+  classification: "medida" | "estimativa" | "convenção" | "importado" | "dado ausente";
+  detail: string;
+}
+
+/** Saída auditável do agente analítico. Sempre exige validação humana. */
+export interface TrainingAnalysis {
+  status: "complete" | "limited" | "blocked";
+  data_quality: {
+    grade: "high" | "moderate" | "low";
+    issues: string[];
+    missing_data: string[];
+  };
+  observed_measures: string[];
+  permitted_inferences: string[];
+  coach_options: CoachOption[];
+  limitations: string[];
+  safety_flags: string[];
+  metric_provenance: MetricProvenance[];
+  requires_human_validation: boolean;
+  ai_provider: string;
+  ai_model: string;
+  generation_time_ms: number;
+}
+
 /** Laudo do gate de qualidade de dados (§7) anexado a cada recomendação. */
 export interface DataQualityCheck {
   code: string;

@@ -109,6 +109,12 @@ except ImportError:
     logger.warning("recommendations router not yet available")
 
 try:
+    from app.routers import ai as ai_router
+    app.include_router(ai_router.router, prefix="/api/ai", tags=["ai"])
+except ImportError:
+    logger.warning("ai router not yet available")
+
+try:
     from app.routers import webhooks as webhooks_router
     app.include_router(webhooks_router.router, prefix="/api/webhooks", tags=["webhooks"])
 except ImportError:
