@@ -80,6 +80,9 @@ class AthleteContext:
     history_days: int = 0
     target_event: str | None = None
     weeks_to_event: int | None = None
+    # §7: notas do gate de qualidade de dados, injetadas no prompt para que o
+    # agente se auto-restrinja quando a base é fraca (preenchido em _generate_and_save).
+    data_quality_notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -110,6 +113,107 @@ class TrainingRecommendation:
     ai_model: str
     tokens_used: int = 0
     generation_time_ms: int = 0
+
+
+# ── §7: Gate de qualidade de dados ────────────────────────────────────────────
+
+@dataclass
+class DataQualityCheck:
+    code: str
+    severity: str   # "info" | "warning" | "blocking"
+    message: str
+
+
+@dataclass
+class DataQualityReport:
+    """
+    Laudo formal de qualidade dos dados que sustentam a recomendação (§7).
+    Não impede a geração — degrada com honestidade: expõe as limitações ao
+    agente (via prompt) e ao atleta (via API), para que ninguém trate uma base
+    fraca como se fosse forte.
+    """
+    level: str                       # "ok" | "degraded" | "insufficient"
+    checks: list[DataQualityCheck] = field(default_factory=list)
+
+    @property
+    def notes(self) -> list[str]:
+        return [c.message for c in self.checks]
+
+    def to_dict(self) -> dict:
+        return {
+            "level": self.level,
+            "checks": [
+                {"code": c.code, "severity": c.severity, "message": c.message}
+                for c in self.checks
+            ],
+        }
+
+
+def assess_data_quality(ctx: "AthleteContext") -> DataQualityReport:
+    """
+    Executa as verificações de qualidade antes de qualquer chamada de IA.
+
+    Regras (todas convenções de treinamento, não fatos clínicos):
+      - histórico curto → CTL subestimado, não ancorar progressão nele;
+      - sem métricas subjetivas hoje → decisão só por carga objetiva;
+      - sem sessões recentes → base insuficiente para individualizar;
+      - TSS só por FC → estimativa, não medida;
+      - FTP/FC ausentes → alvos por %FTP ou zonas de FC indisponíveis.
+    """
+    checks: list[DataQualityCheck] = []
+
+    if not ctx.ctl_converged:
+        checks.append(DataQualityCheck(
+            "ctl_not_converged", "warning",
+            f"Histórico de carga curto ({ctx.history_days} dias): CTL está "
+            "subestimado por construção — não ancorar decisões de progressão nele.",
+        ))
+
+    if ctx.metrics_missing:
+        checks.append(DataQualityCheck(
+            "metrics_missing", "warning",
+            "Métricas subjetivas de hoje ausentes: a decisão se apoia apenas na "
+            "carga objetiva, sem sono, fadiga percebida ou dor muscular.",
+        ))
+
+    n_sessions = len(ctx.recent_workouts) + len(ctx.recent_strength)
+    if n_sessions == 0:
+        checks.append(DataQualityCheck(
+            "no_recent_sessions", "blocking",
+            "Nenhuma sessão recente registrada: sem base para individualizar a "
+            "recomendação — sugestão será conservadora e genérica.",
+        ))
+
+    # Proveniência agregada: só há TSS estimado por FC, nenhum medido por potência.
+    methods = {w.get("tss_method") for w in ctx.recent_workouts if w.get("tss")}
+    if methods and "power" not in methods and "stored" not in methods and methods <= {"hr", "strength"}:
+        checks.append(DataQualityCheck(
+            "tss_hr_only", "info",
+            "TSS recente derivado de FC/RPE (estimativa), não de potência (medida): "
+            "trate os valores de carga como aproximados.",
+        ))
+
+    modalities = ctx.sport_modalities or []
+    if ctx.ftp_watts is None and ("cycling" in modalities or ctx.primary_modality == "cycling"):
+        checks.append(DataQualityCheck(
+            "no_ftp", "info",
+            "FTP não definido: alvos em %FTP indisponíveis — usar RPE e zonas de FC.",
+        ))
+    if not ctx.max_hr or not ctx.resting_hr:
+        checks.append(DataQualityCheck(
+            "no_hr_anchors", "info",
+            "FC máxima/repouso incompletas: zonas de FC e estimativa de TSS por FC "
+            "ficam imprecisas.",
+        ))
+
+    if any(c.severity == "blocking" for c in checks):
+        level = "insufficient"
+    elif any(c.severity == "warning" for c in checks):
+        level = "degraded"
+    else:
+        level = "ok"
+
+    return DataQualityReport(level=level, checks=checks)
 
 
 # ── System prompt ─────────────────────────────────────────────────────────────
@@ -202,7 +306,17 @@ Generate ONE specific training session for TOMORROW, plus a nutrition plan for t
 # ── Context formatter ─────────────────────────────────────────────────────────
 
 def format_athlete_context(ctx: AthleteContext) -> str:
-    lines: list[str] = [
+    lines: list[str] = []
+
+    # §7: o gate de qualidade vem PRIMEIRO — o agente deve calibrar a confiança
+    # de toda a análise por estas limitações antes de ler qualquer número.
+    if ctx.data_quality_notes:
+        lines.append("=== DATA QUALITY GATE (read first — constrain your confidence) ===")
+        for note in ctx.data_quality_notes:
+            lines.append(f"  ⚠ {note}")
+        lines.append("")
+
+    lines += [
         "=== ATHLETE PROFILE ===",
         f"Name: {ctx.name}",
         f"Age: {ctx.age or 'unknown'}  |  Gender: {ctx.gender or 'unknown'}",

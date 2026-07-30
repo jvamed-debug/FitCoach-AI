@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store/authStore";
+import DataQualityNotice from "@/components/recommendations/DataQualityNotice";
 import type { AIRecommendation, StructuredPlan, NutritionPlan } from "@/lib/types";
 
 const WORKOUT_ICON: Record<string, string> = {
@@ -327,6 +328,10 @@ export default function RecommendationsPage() {
         {/* Recommendation card */}
         {rec && !generating && (
           <>
+            {/* Gate de qualidade (§7) — vem antes da prescrição de propósito:
+                o atleta deve saber sobre qual base a sugestão foi construída. */}
+            <DataQualityNotice report={rec.data_quality} />
+
             {/* Header */}
             <div className="bg-surface rounded-2xl border border-border p-6">
               <div className="flex items-start gap-4">

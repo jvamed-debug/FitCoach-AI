@@ -205,6 +205,18 @@ export interface NutritionPlan {
   notes: string | null;
 }
 
+/** Laudo do gate de qualidade de dados (§7) anexado a cada recomendação. */
+export interface DataQualityCheck {
+  code: string;
+  severity: "info" | "warning" | "blocking";
+  message: string;
+}
+
+export interface DataQualityReport {
+  level: "ok" | "degraded" | "insufficient";
+  checks: DataQualityCheck[];
+}
+
 export interface AIRecommendation {
   id: string;
   athlete_id: string;
@@ -217,6 +229,7 @@ export interface AIRecommendation {
   structured_plan: StructuredPlan | null;
   nutrition_plan: NutritionPlan | null;
   rationale: string | null;
+  data_quality: DataQualityReport | null;
   feedback_rating: number | null;
   feedback_notes: string | null;
   was_followed: boolean | null;

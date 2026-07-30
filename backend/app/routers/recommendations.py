@@ -24,7 +24,7 @@ from app.database import get_db
 from app.dependencies import require_lgpd_consent
 from app.models.athlete import Athlete
 from app.models.recommendation import AIRecommendation
-from app.services.ai_service import AIService, build_athlete_context
+from app.services.ai_service import AIService, build_athlete_context, assess_data_quality
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -47,6 +47,8 @@ def _rec_dict(r: AIRecommendation) -> dict:
         "structured_plan": r.structured_plan,
         "nutrition_plan": r.nutrition_plan,
         "rationale": r.rationale,
+        # §7: laudo de qualidade dos dados que sustentaram esta recomendação.
+        "data_quality": (r.input_context or {}).get("data_quality"),
         "tokens_used": r.tokens_used,
         "generation_time_ms": r.generation_time_ms,
         "feedback_rating": r.feedback_rating,
@@ -61,6 +63,11 @@ async def _generate_and_save(db: AsyncSession, athlete: Athlete) -> AIRecommenda
     ctx = await build_athlete_context(db, str(athlete.id))
     if not ctx:
         raise HTTPException(status_code=404, detail="Contexto do atleta não encontrado")
+
+    # §7: gate de qualidade de dados ANTES da IA. Não bloqueia — injeta as
+    # limitações no prompt (o agente se auto-restringe) e guarda o laudo.
+    quality = assess_data_quality(ctx)
+    ctx.data_quality_notes = quality.notes
 
     rec = await _ai_service.generate_recommendation(ctx)
 
@@ -78,7 +85,11 @@ async def _generate_and_save(db: AsyncSession, athlete: Athlete) -> AIRecommenda
         rationale=rec.rationale,
         tokens_used=rec.tokens_used,
         generation_time_ms=rec.generation_time_ms,
-        input_context={"tsb": ctx.tsb, "ctl": ctx.ctl, "atl": ctx.atl, "metrics_missing": ctx.metrics_missing},
+        input_context={
+            "tsb": ctx.tsb, "ctl": ctx.ctl, "atl": ctx.atl,
+            "metrics_missing": ctx.metrics_missing,
+            "data_quality": quality.to_dict(),
+        },
     ).on_conflict_do_update(
         index_elements=["athlete_id", "recommendation_date"],
         set_={
@@ -92,6 +103,11 @@ async def _generate_and_save(db: AsyncSession, athlete: Athlete) -> AIRecommenda
             "rationale": rec.rationale,
             "tokens_used": rec.tokens_used,
             "generation_time_ms": rec.generation_time_ms,
+            "input_context": {
+                "tsb": ctx.tsb, "ctl": ctx.ctl, "atl": ctx.atl,
+                "metrics_missing": ctx.metrics_missing,
+                "data_quality": quality.to_dict(),
+            },
         },
     ).returning(AIRecommendation.__table__)
 
