@@ -590,6 +590,20 @@ def generate_default_nutrition(weight_kg: float | None, workout_type: str) -> di
 
 # ── Main AI service ───────────────────────────────────────────────────────────
 
+def _first_text(blocks) -> str:
+    """
+    Extrai o texto da resposta da Anthropic.
+
+    Necessário porque `content[0]` NÃO é o texto quando há raciocínio: nos
+    modelos atuais o thinking vem ligado por padrão e ocupa os primeiros
+    blocos, então indexar em [0] pegava um bloco sem `.text` e levantava
+    AttributeError. Percorre os blocos e concatena apenas os de tipo 'text'.
+    """
+    return "".join(
+        b.text for b in (blocks or [])
+        if getattr(b, "type", None) == "text" and getattr(b, "text", None)
+    )
+
 class AIService:
     def __init__(self, provider: AIProvider | None = None):
         self.provider = provider or AIProvider(settings.default_ai_provider)
@@ -602,12 +616,17 @@ class AIService:
         """Returns (raw_response_text, tokens_used)."""
         response = await self._anthropic.messages.create(
             model=settings.anthropic_model,
-            max_tokens=2048,
-            temperature=0.3,
+            max_tokens=settings.ai_max_tokens,
+            # Sem `temperature`: o parâmetro foi removido no Opus 4.7+ e retorna
+            # 400. A determinação vem do prompt e do effort, não da amostragem.
+            output_config={"effort": settings.ai_effort},
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
         )
-        text = response.content[0].text if response.content else ""
+        # Os classificadores de segurança podem recusar (HTTP 200 + stop_reason).
+        if response.stop_reason == "refusal":
+            raise RuntimeError("Anthropic recusou a requisição (stop_reason=refusal)")
+        text = _first_text(response.content)
         tokens = response.usage.input_tokens + response.usage.output_tokens
         return text, tokens
 
@@ -616,7 +635,7 @@ class AIService:
         response = await self._openai.chat.completions.create(
             model=settings.openai_model,
             temperature=0.3,
-            max_tokens=2048,
+            max_tokens=settings.ai_max_tokens,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},

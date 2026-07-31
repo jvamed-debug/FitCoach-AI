@@ -27,6 +27,7 @@ from app.services.ai_service import (
     AthleteContext,
     DataQualityReport,
     _extract_json,
+    _first_text,
     format_athlete_context,
 )
 
@@ -261,17 +262,20 @@ class AnalysisService:
         if prov == AIProvider.ANTHROPIC:
             response = await self._ai._anthropic.messages.create(
                 model=settings.anthropic_model,
-                max_tokens=2048,
-                temperature=0.2,          # análise: mais determinística que prescrição
+                max_tokens=settings.ai_max_tokens,
+                # `temperature` foi removido no Opus 4.7+ (retorna 400).
+                output_config={"effort": settings.ai_effort},
                 system=ANALYST_SYSTEM_PROMPT,
                 messages=[{"role": "user", "content": user_message}],
             )
-            return (response.content[0].text if response.content else ""), settings.anthropic_model
+            if response.stop_reason == "refusal":
+                raise RuntimeError("Anthropic recusou a requisição (stop_reason=refusal)")
+            return _first_text(response.content), settings.anthropic_model
 
         response = await self._ai._openai.chat.completions.create(
             model=settings.openai_model,
             temperature=0.2,
-            max_tokens=2048,
+            max_tokens=settings.ai_max_tokens,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": ANALYST_SYSTEM_PROMPT},

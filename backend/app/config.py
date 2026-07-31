@@ -34,8 +34,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     default_ai_provider: Literal["anthropic", "openai"] = "anthropic"
-    anthropic_model: str = "claude-sonnet-4-6"
+    anthropic_model: str = "claude-opus-5"
     openai_model: str = "gpt-4o"
+    # No Opus 5 o "thinking" é ligado por padrão e divide o max_tokens com a
+    # resposta — 2048 truncava o JSON no meio e caía no plano de descanso.
+    ai_max_tokens: int = 16000
+    # low | medium | high | xhigh | max. Controla profundidade de raciocínio e
+    # gasto de tokens; 'high' é o padrão da API.
+    ai_effort: Literal["low", "medium", "high", "xhigh", "max"] = "high"
 
     # Email
     resend_api_key: str = ""

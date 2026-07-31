@@ -21,6 +21,7 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.services.ai_service import _first_text
 from app.models.admin import AdminUser
 from app.models.athlete import Athlete
 from app.models.metric import DailyMetric
@@ -164,12 +165,14 @@ async def generate_weekly_report(db: AsyncSession, athlete_id: str, today: date)
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         response = await client.messages.create(
             model=settings.anthropic_model,
-            max_tokens=1024,
-            temperature=0.4,
+            max_tokens=settings.ai_max_tokens,
+            # `temperature` foi removido no Opus 4.7+ (retorna 400); e o texto
+            # não está em content[0] quando há blocos de raciocínio antes.
+            output_config={"effort": settings.ai_effort},
             system=_REPORT_SYSTEM,
             messages=[{"role": "user", "content": user_msg}],
         )
-        raw = response.content[0].text.strip()
+        raw = _first_text(response.content).strip()
         report = json.loads(raw)
         report["_context"] = ctx
         return report
