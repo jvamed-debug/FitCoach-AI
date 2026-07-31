@@ -590,6 +590,18 @@ def generate_default_nutrition(weight_kg: float | None, workout_type: str) -> di
 
 # ── Main AI service ───────────────────────────────────────────────────────────
 
+def _is_config_error(exc: Exception) -> bool:
+    """
+    Distingue erro de código/configuração de indisponibilidade da API.
+
+    TypeError/AttributeError vindos de uma chamada ao SDK quase sempre
+    significam parâmetro que a versão fixada não conhece ou campo que mudou de
+    forma — um bug que nenhum retry resolve. Tratá-lo como "provedor fora do ar"
+    é o que fez a recomendação cair silenciosamente no plano de descanso.
+    """
+    return isinstance(exc, (TypeError, AttributeError, NameError, ImportError))
+
+
 def _first_text(blocks) -> str:
     """
     Extrai o texto da resposta da Anthropic.
@@ -718,19 +730,50 @@ class AIService:
 
             except Exception as e:
                 last_error = e
-                logger.warning("AI provider %s failed: %s — trying next", prov.value, e)
+                if _is_config_error(e):
+                    # Erro de código/configuração: não é indisponibilidade e não
+                    # vai se curar sozinho. Já custou dois diagnósticos errados
+                    # (parâmetro inexistente no SDK fixado, chave ausente) porque
+                    # ficava indistinguível de uma queda da API.
+                    logger.error(
+                        "AI provider %s: ERRO DE CONFIGURAÇÃO (%s: %s). "
+                        "Isto é um bug, não indisponibilidade — verifique versão do "
+                        "SDK, nome do modelo e variáveis de ambiente.",
+                        prov.value, type(e).__name__, e,
+                    )
+                else:
+                    logger.warning("AI provider %s failed: %s — trying next", prov.value, e)
 
-        # All providers failed → rest day
-        logger.error("All AI providers failed. Last error: %s", last_error)
-        rest = _rest_day_plan("All AI providers unavailable")
-        nutrition = rest.pop("nutrition_plan", {})
+        # All providers failed → rest day.
+        # O texto distingue as duas causas: um erro de configuração continuaria
+        # devolvendo "descanso" todo dia, e sem essa distinção o atleta leria
+        # isso como uma prescrição real da IA em vez de um defeito a corrigir.
+        is_config = last_error is not None and _is_config_error(last_error)
+        logger.error(
+            "All AI providers failed (%s). Last error: %s: %s",
+            "ERRO DE CONFIGURAÇÃO" if is_config else "indisponibilidade",
+            type(last_error).__name__ if last_error else "?", last_error,
+        )
+        if is_config:
+            reason = (
+                "Erro de configuração da IA — este texto NÃO é uma recomendação de "
+                "treino. Nenhum modelo chegou a ser consultado. Verifique a versão "
+                "do SDK, o nome do modelo e as variáveis de ambiente do backend."
+            )
+        else:
+            reason = (
+                "Provedores de IA indisponíveis no momento — este texto NÃO é uma "
+                "recomendação de treino. Tente gerar novamente em alguns minutos."
+            )
+        rest = _rest_day_plan(reason)
+        rest.pop("nutrition_plan", None)
         return TrainingRecommendation(
             workout_type="rest",
-            title="Dia de descanso",
-            recommendation_text="Todos os provedores de IA indisponíveis. Descanse hoje.",
+            title="Recomendação indisponível",
+            recommendation_text=reason,
             structured_plan=rest,
             nutrition_plan=generate_default_nutrition(context.weight_kg, "rest"),
-            rationale="Fallback: IA indisponível.",
+            rationale=reason,
             ai_provider="fallback",
             ai_model="none",
         )
