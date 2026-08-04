@@ -154,6 +154,85 @@ class DataQualityReport:
         }
 
 
+def _parse_dt(valor):
+    """ISO 8601 tolerante a 'Z' e a valores ausentes."""
+    if not valor:
+        return None
+    try:
+        return datetime.fromisoformat(str(valor).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def detect_duplicates(workouts: list[dict]) -> list[tuple[dict, dict]]:
+    """
+    §7: sessões duplicadas entre fontes.
+
+    O caso real: o atleta registra o treino manualmente e depois sincroniza o
+    Strava — a mesma sessão entra duas vezes, com fontes diferentes. O TSS do
+    dia dobra, e como CTL/ATL/TSB derivam dele, TODO número a jusante fica
+    inflado sem nenhum sinal de erro. É a falha de qualidade mais cara desta
+    lista, porque é silenciosa e permanente.
+
+    Heurística: início a menos de 15 min de distância, fontes distintas e
+    durações dentro de 15%. Deliberadamente conservadora — duas sessões
+    genuinamente distintas no mesmo horário são raras, mas um falso positivo
+    aqui só gera um aviso, nunca descarta dado.
+    """
+    pares: list[tuple[dict, dict]] = []
+    comdata = [(w, _parse_dt(w.get("start_time"))) for w in workouts]
+    comdata = [(w, d) for w, d in comdata if d is not None]
+
+    for i, (a, da) in enumerate(comdata):
+        for b, db in comdata[i + 1:]:
+            if a.get("source") == b.get("source"):
+                continue
+            if abs((da - db).total_seconds()) > 15 * 60:
+                continue
+            dur_a = a.get("duration_seconds") or 0
+            dur_b = b.get("duration_seconds") or 0
+            if dur_a and dur_b:
+                maior = max(dur_a, dur_b)
+                if abs(dur_a - dur_b) / maior > 0.15:
+                    continue
+            pares.append((a, b))
+    return pares
+
+
+def detect_gaps(workouts: list[dict], *, min_dias: int = 14) -> list[tuple[str, str, int]]:
+    """
+    §7: lacunas na série.
+
+    Uma lacuna longa entre sessões registradas pode significar duas coisas
+    opostas — o atleta parou, ou treinou sem registrar. As duas produzem o
+    mesmo decaimento de CTL/ATL, e a diferença importa. O agente precisa
+    perguntar em vez de assumir.
+    """
+    datas = sorted(d for d in (_parse_dt(w.get("start_time")) for w in workouts) if d)
+    lacunas: list[tuple[str, str, int]] = []
+    for anterior, seguinte in zip(datas, datas[1:]):
+        dias = (seguinte - anterior).days
+        if dias >= min_dias:
+            lacunas.append((anterior.date().isoformat(), seguinte.date().isoformat(), dias))
+    return lacunas
+
+
+def detect_device_change(workouts: list[dict]) -> bool:
+    """
+    §7: mudança abrupta de dispositivo.
+
+    Aproximada pela presença intermitente de potência dentro do ciclismo: se
+    parte das sessões tem potenciômetro e parte não, o TSS da série mistura
+    medida e estimativa, e uma comparação temporal ingênua leria a troca de
+    dispositivo como mudança de condicionamento.
+    """
+    ciclismo = [w for w in workouts if w.get("sport_type") == "cycling"]
+    if len(ciclismo) < 3:
+        return False
+    com_potencia = sum(1 for w in ciclismo if w.get("normalized_power_watts"))
+    return 0 < com_potencia < len(ciclismo)
+
+
 def assess_data_quality(ctx: "AthleteContext") -> DataQualityReport:
     """
     Executa as verificações de qualidade antes de qualquer chamada de IA.
@@ -209,6 +288,42 @@ def assess_data_quality(ctx: "AthleteContext") -> DataQualityReport:
             "no_hr_anchors", "info",
             "FC máxima/repouso incompletas: zonas de FC e estimativa de TSS por FC "
             "ficam imprecisas.",
+        ))
+
+    # §7: duplicidade entre fontes. Bloqueante porque corrompe o TSS do dia e,
+    # por consequência, toda a série de CTL/ATL/TSB — interpretar carga sobre
+    # uma base duplicada é pior que não interpretar.
+    duplicatas = detect_duplicates(ctx.recent_workouts)
+    if duplicatas:
+        exemplos = "; ".join(
+            f"{(a.get('start_time') or '')[:16]} ({a.get('source')} × {b.get('source')})"
+            for a, b in duplicatas[:3]
+        )
+        checks.append(DataQualityCheck(
+            "duplicate_sessions", "blocking",
+            f"{len(duplicatas)} par(es) de sessões possivelmente duplicadas entre "
+            f"fontes — {exemplos}. Isso dobra o TSS do dia e infla CTL/ATL/TSB. "
+            f"Confirme e remova a duplicata antes de interpretar a carga.",
+        ))
+
+    # §7: lacunas na série.
+    lacunas = detect_gaps(ctx.recent_workouts)
+    if lacunas:
+        ini, fim, dias = max(lacunas, key=lambda x: x[2])
+        checks.append(DataQualityCheck(
+            "series_gap", "warning",
+            f"Lacuna de {dias} dias entre {ini} e {fim} sem sessão registrada. "
+            f"Não é possível distinguir pausa real de treino não registrado — "
+            f"as duas produzem o mesmo decaimento de CTL/ATL.",
+        ))
+
+    # §7: mudança abrupta de dispositivo.
+    if detect_device_change(ctx.recent_workouts):
+        checks.append(DataQualityCheck(
+            "device_change", "info",
+            "Parte das sessões de ciclismo tem potência e parte não: a série "
+            "mistura TSS medido e estimado. Uma comparação temporal ingênua "
+            "leria a troca de dispositivo como mudança de condicionamento.",
         ))
 
     if any(c.severity == "blocking" for c in checks):
@@ -1009,6 +1124,7 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
     recent_workouts = [
         {
             "sport_type": w.sport_type,
+            "source": w.source,          # §7: necessário para detectar duplicidade
             "start_time": w.start_time.isoformat() if w.start_time else None,
             "duration_seconds": w.duration_seconds,
             "tss": float(w.tss) if w.tss else None,

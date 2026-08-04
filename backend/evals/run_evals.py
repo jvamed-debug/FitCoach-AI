@@ -69,6 +69,14 @@ def check_context(sc: Scenario) -> list[str]:
         if "estimativa-FC" not in prompt:
             falhas.append("TSS estimado por FC não está rotulado no prompt")
 
+    # §7: duplicidade é bloqueante — corrompe todo número derivado do TSS.
+    from app.services.ai_service import detect_duplicates
+    if detect_duplicates(ctx.recent_workouts):
+        if not any(c.code == "duplicate_sessions" for c in quality.checks):
+            falhas.append("há sessões duplicadas, mas o gate não acusou")
+        elif quality.level != "insufficient":
+            falhas.append("duplicidade detectada mas o gate não bloqueou")
+
     if ctx.recent_feedback and "ATHLETE FEEDBACK" not in prompt:
         falhas.append("há feedback registrado, mas ele não chega ao prompt")
 

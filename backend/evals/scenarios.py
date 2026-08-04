@@ -158,6 +158,27 @@ SCENARIOS: list[Scenario] = [
         expectativas=[espera_sem_intensidade],
     ),
     Scenario(
+        nome="sessoes_duplicadas",
+        descricao=(
+            "O mesmo treino entrou pelo registro manual e pelo Strava. O TSS do "
+            "dia está dobrado e a série inteira de CTL/ATL/TSB, inflada. O gate "
+            "tem de bloquear antes de qualquer interpretação de carga."
+        ),
+        contexto=_ctx(
+            recent_workouts=[
+                {"sport_type": "cycling", "source": "manual",
+                 "start_time": "2026-01-19T07:00:00+00:00", "duration_seconds": 3600,
+                 "tss": 75.0, "tss_method": "hr", "normalized_power_watts": None,
+                 "avg_heart_rate": 145, "title": "Pedal registrado à mão"},
+                {"sport_type": "cycling", "source": "strava",
+                 "start_time": "2026-01-19T07:06:00+00:00", "duration_seconds": 3650,
+                 "tss": 76.0, "tss_method": "hr", "normalized_power_watts": None,
+                 "avg_heart_rate": 146, "title": "Morning Ride"},
+            ],
+        ),
+        expectativas=[],
+    ),
+    Scenario(
         nome="feedback_baixa_aderencia_forca",
         descricao=(
             "O atleta ignorou as três últimas sessões de força e disse por quê. "
