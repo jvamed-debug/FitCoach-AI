@@ -90,6 +90,13 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
 
+      # Modo offline: não chama a API, não custa tokens. Cobra do harness que o
+      # contexto carregue as restrições de cada cenário — se o CTL não
+      # convergiu, o prompt tem de dizer. Para medir o comportamento do modelo,
+      # rode localmente com `python -m evals.run_evals --live`.
+      - name: Evals do agente (offline)
+        run: python -m evals.run_evals
+
   # ── Frontend: type-check ─────────────────────────────────────────────────────
   frontend:
     name: Frontend (TypeScript)
