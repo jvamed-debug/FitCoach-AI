@@ -20,7 +20,7 @@ from typing import Any
 
 import anthropic
 import openai
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -83,6 +83,11 @@ class AthleteContext:
     # §7: notas do gate de qualidade de dados, injetadas no prompt para que o
     # agente se auto-restrinja quando a base é fraca (preenchido em _generate_and_save).
     data_quality_notes: list[str] = field(default_factory=list)
+    # Ciclo de feedback: o que o atleta achou das recomendações anteriores e
+    # quais ele de fato executou. É INFORMAÇÃO DECLARADA (§5, nível 4) — revela
+    # preferência e aderência, nunca resposta fisiológica.
+    recent_feedback: list[dict] = field(default_factory=list)
+    feedback_patterns: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -251,6 +256,29 @@ Generate ONE specific training session for TOMORROW, plus a nutrition plan for t
 - motivation_score ≤ 3 → prescribe shorter, enjoyable session
 - sleep_quality ≤ 4 → full rest or active recovery only
 
+## ATHLETE FEEDBACK (declared information — shapes HOW, never WHETHER)
+Past ratings, adherence and free-text notes tell you what this athlete
+tolerates, enjoys and actually does. They are declared preference, not
+physiological measurement, and they rank BELOW load data in the source
+hierarchy. Concretely:
+- Feedback NEVER overrides the TSB rules or the subjective-metric overrides
+  above. A 5/5 rating on hard intervals is not a reason to prescribe intensity
+  at TSB < -25. Load decides WHAT the session is; feedback decides how it is
+  built and phrased.
+- Low adherence to a session type means your approach is not landing — adapt it
+  (shorter, different time of day, different exercise selection, clearer
+  rationale). It does not mean repeat it harder, and it does not mean drop the
+  training quality the athlete needs.
+- The free-text notes are the richest signal because they say WHY. Address the
+  actual complaint: "too long" is a duration problem, "boring" is a variety
+  problem, "knee hurt" is a red flag to surface — never something to design
+  around silently.
+- Do not infer physiological adaptation from ratings. An athlete rating easy
+  sessions highly tells you about preference, not about their aerobic response.
+- Small samples are not patterns. If the context says no aggregate pattern has
+  formed yet, treat each entry as an anecdote and say so rather than
+  generalising from two data points.
+
 ## SPORT-SPECIFIC FORMAT
 - **Cycling**: sections with duration_minutes, power_pct_ftp, hr_zone, cadence_rpm, rpe
 - **Running**: sections with duration_minutes, pace_min_per_km OR rpe, hr_zone
@@ -399,6 +427,48 @@ def format_athlete_context(ctx: AthleteContext) -> str:
                 f"  {str(s.get('session_date',''))[:10]}  {s.get('session_type','?'):12s}"
                 f"  {s.get('duration_minutes','?')}min  RPE={s.get('rpe_overall','?')}{tss}"
             )
+        lines.append("")
+
+    # Ciclo de feedback. Rotulado como DECLARED INFORMATION (§5, nível 4) para
+    # que o agente não o confunda com medida fisiológica: uma nota alta diz que
+    # o atleta GOSTOU, não que a sessão foi adequada à carga dele.
+    if ctx.recent_feedback:
+        lines.append("=== ATHLETE FEEDBACK ON PAST RECOMMENDATIONS ===")
+        lines.append(
+            "DECLARED INFORMATION (source hierarchy level 4) — preference and "
+            "adherence only. Never physiological response, never a reason to "
+            "override the TSB rules or the subjective-metric overrides."
+        )
+        if ctx.feedback_patterns:
+            lines.append(f"Patterns (only types with >= {_MIN_PARA_PADRAO} entries):")
+            for p in ctx.feedback_patterns:
+                bits = [f"n={p['n']}"]
+                if p["avg_rating"] is not None:
+                    bits.append(f"avg rating {p['avg_rating']}/5")
+                if p["followed_rate"] is not None:
+                    bits.append(f"followed {p['followed_rate'] * 100:.0f}%")
+                lines.append(f"  {p['workout_type']:22s} {' · '.join(bits)}")
+        else:
+            lines.append(
+                f"No aggregate pattern yet (no workout type reached "
+                f"{_MIN_PARA_PADRAO} rated sessions). Treat the entries below as "
+                f"individual data points, not as a trend."
+            )
+        lines.append("Most recent entries:")
+        for f in ctx.recent_feedback[:10]:
+            rating = f"{f['rating']}/5" if f["rating"] is not None else "sem nota"
+            followed = (
+                "executou" if f["was_followed"] is True
+                else "NÃO executou" if f["was_followed"] is False
+                else "execução não informada"
+            )
+            lines.append(
+                f"  {f.get('date', '')[:10]}  {f.get('workout_type') or '?':22s}"
+                f"  {rating:9s}  {followed}"
+            )
+            if f["notes"]:
+                # O texto livre é o sinal mais rico: é o único que diz POR QUÊ.
+                lines.append(f'      nota do atleta: "{f["notes"]}"')
         lines.append("")
 
     lines += [
@@ -834,6 +904,59 @@ def _plan_to_text(plan: dict) -> str:
     return "\n".join(lines)
 
 
+# ── Ciclo de feedback ─────────────────────────────────────────────────────────
+
+# Abaixo disto não é padrão, é anedota. Duas notas altas para "cycling_threshold"
+# não significam que o atleta responde bem a limiar — significam que ele avaliou
+# duas sessões. O agente vê as entradas individuais de qualquer forma; só a
+# AGREGAÇÃO exige massa mínima.
+_MIN_PARA_PADRAO = 3
+
+
+def _summarize_feedback(recs) -> tuple[list[dict], list[dict]]:
+    """
+    Converte recomendações avaliadas em (entradas individuais, padrões agregados).
+
+    Devolve as duas formas de propósito: as entradas carregam as notas em texto
+    livre — o sinal mais rico e o único que explica o PORQUÊ de uma nota baixa —
+    enquanto os agregados só aparecem quando há amostra suficiente.
+    """
+    entries: list[dict] = []
+    por_tipo: dict[str, list[dict]] = {}
+
+    for r in recs:
+        entry = {
+            "date": r.recommendation_date.isoformat() if r.recommendation_date else None,
+            "workout_type": r.workout_type,
+            "title": r.title,
+            "rating": r.feedback_rating,
+            "was_followed": r.was_followed,
+            "notes": (r.feedback_notes or "").strip() or None,
+        }
+        entries.append(entry)
+        if r.workout_type:
+            por_tipo.setdefault(r.workout_type, []).append(entry)
+
+    patterns: list[dict] = []
+    for wtype, items in por_tipo.items():
+        if len(items) < _MIN_PARA_PADRAO:
+            continue
+        notas = [i["rating"] for i in items if i["rating"] is not None]
+        executados = [i["was_followed"] for i in items if i["was_followed"] is not None]
+        patterns.append({
+            "workout_type": wtype,
+            "n": len(items),
+            "avg_rating": round(sum(notas) / len(notas), 1) if notas else None,
+            "followed_rate": (
+                round(sum(1 for x in executados if x) / len(executados), 2)
+                if executados else None
+            ),
+        })
+
+    patterns.sort(key=lambda p: -p["n"])
+    return entries, patterns
+
+
 # ── Context builder ───────────────────────────────────────────────────────────
 
 async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteContext | None:
@@ -908,6 +1031,22 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
         for s in str_result.scalars().all()
     ]
 
+    # Ciclo de feedback: recomendações passadas que o atleta avaliou ou marcou
+    # como (não) executadas. Sem isso o app coletava a nota e a descartava.
+    fb_result = await db.execute(
+        select(AIRecommendation)
+        .where(
+            AIRecommendation.athlete_id == athlete_id,
+            or_(
+                AIRecommendation.feedback_rating.isnot(None),
+                AIRecommendation.was_followed.isnot(None),
+            ),
+        )
+        .order_by(desc(AIRecommendation.recommendation_date))
+        .limit(20)
+    )
+    recent_feedback, feedback_patterns = _summarize_feedback(fb_result.scalars().all())
+
     # Today's metrics
     metrics_result = await db.execute(
         select(DailyMetric).where(
@@ -980,4 +1119,6 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
         metrics_missing=(latest_metrics is None),
         ctl_converged=ctl_converged,
         history_days=history_days,
+        recent_feedback=recent_feedback,
+        feedback_patterns=feedback_patterns,
     )
