@@ -151,6 +151,89 @@ def test_opcao_ancorada_em_ctl_nao_convergido_reprova():
     assert any(v.rule == "regra 9" for v in rep.blocking)
 
 
+# Os três casos abaixo nasceram de um falso positivo real: a primeira versão do
+# check reprovava qualquer menção a CTL, o que condenava a MELHOR opção
+# possível (propor importar histórico para resolver a não-convergência) e
+# exigia a frase literal "não convergido" em vez de aceitar redações melhores.
+# Um eval que castiga a resposta certa treina quem o lê a ignorá-lo.
+
+def test_regra_9_aceita_ressalva_em_outras_palavras():
+    rep = validate_analysis(
+        _analise_valida(coach_options=[{
+            "option": "Aumentar carga em 5%",
+            "rationale": "O CTL está subestimado por construção, então este aumento "
+                         "não se apoia nele.",
+            "tradeoff": "Pode ser conservador demais.",
+        }]),
+        ctl_converged=False,
+    )
+    assert rep.passed, rep.summary()
+
+
+def test_regra_9_permite_propor_corrigir_a_convergencia():
+    """Importar histórico é a resposta ideal à não-convergência, não uma violação."""
+    rep = validate_analysis(
+        _analise_valida(coach_options=[{
+            "option": "Importar histórico anterior ou semear a série",
+            "rationale": "Libera as leituras dependentes de CTL.",
+            "tradeoff": "Depende de acesso a dados que podem não existir.",
+        }]),
+        ctl_converged=False,
+    )
+    assert rep.passed, rep.summary()
+
+
+def test_regra_9_nao_morde_com_ctl_convergido():
+    rep = validate_analysis(
+        _analise_valida(coach_options=[
+            {"option": "Aumentar carga para elevar o CTL", "rationale": "", "tradeoff": ""},
+        ]),
+        ctl_converged=True,
+    )
+    assert rep.passed, rep.summary()
+
+
+def test_exemplo_few_shot_do_prompt_cumpre_o_contrato():
+    """
+    O exemplo embutido no prompt de sistema é validado contra o mesmo contrato
+    que ele ensina. Um exemplo que viola o contrato ensina a violação.
+    """
+    import json
+    import re
+
+    from app.services.analysis_service import ANALYST_SYSTEM_PROMPT
+
+    bloco = ANALYST_SYSTEM_PROMPT.split("EXEMPLO DE SAÍDA BEM CALIBRADA")[1]
+    exemplo = json.loads(
+        re.search(r'\{\s*\n\s*"observed_measures".*?\n\}', bloco, re.S).group(0)
+    )
+    # O exemplo é um fragmento; o cenário que ele ilustra implica o resto.
+    completo = dict(
+        exemplo,
+        status="limited",
+        data_quality={"grade": "low", "issues": ["CTL subestimado."],
+                      "missing_data": ["Sem métricas subjetivas hoje."]},
+        metric_provenance=[{"metric": "TSS", "source": "cálculo determinístico local",
+                            "classification": "estimativa", "detail": "19 sessões via FC"}],
+        requires_human_validation=True,
+    )
+    rep = validate_analysis(completo, ctl_converged=False)
+    assert rep.passed, rep.summary()
+
+
+def test_exemplo_few_shot_do_prescritor_cumpre_o_contrato():
+    """O exemplo ilustra TSB crítico — tem de respeitar a própria regra que ensina."""
+    import json
+    import re
+
+    from app.services.ai_service import SYSTEM_PROMPT
+
+    bloco = SYSTEM_PROMPT.split("## WORKED EXAMPLE")[1]
+    plano = json.loads(re.search(r'\{\s*\n\s*"workout_type".*?\n\}', bloco, re.S).group(0))
+    rep = validate_plan(plano, tsb=-28.0, metrics={"fatigue_score": 6})
+    assert rep.passed, rep.summary()
+
+
 # ── Cenários offline ──────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("sc", SCENARIOS, ids=lambda s: s.nome)

@@ -328,6 +328,33 @@ hierarchy. Concretely:
     "notes": "Extra electrolytes if sweating heavily"
   }
 }
+
+## WORKED EXAMPLE — the hard case
+
+Context: TSB -28 (critical), athlete rated the last three interval sessions 5/5
+and asked for more intensity, fatigue_score 6/10.
+
+The rule is not negotiable here: TSB < -25 means rest or mobility, and a high
+rating is preference, not physiology. The skill is delivering that without
+sounding punitive or dismissive of what the athlete wants.
+
+{
+  "workout_type": "rest",
+  "title": "Descanso — a carga acumulada pede",
+  "duration_minutes": 0,
+  "intensity": "rest",
+  "sections": [],
+  "exercises": [],
+  "rationale": "Seu TSB está em -28, o ponto mais negativo das últimas seis semanas: a fadiga acumulada (ATL 98) está bem acima da base de condicionamento (CTL 70). Isso é uma medida da sua própria série, não uma estimativa. Você avaliou os últimos intervalados em 5/5 e pediu mais intensidade — isso me diz que a sessão está bem construída para você, e ela volta assim que o TSB permitir. O que a nota não mede é a carga acumulada, e é ela que decide hoje. Descanso agora protege exatamente as sessões de qualidade que você quer fazer: treinar forte com TSB nesse nível costuma render menos e atrasar a recuperação.",
+  "key_metrics_considered": ["TSB: -28", "CTL: 70", "ATL: 98", "fatigue_score: 6/10"],
+  "cautions": ["O TSS não captura sono, calor, estresse nem trabalho de força — se algum desses estiver pesado, o custo real foi maior que o registrado."]
+}
+
+Note what the example does: it names the number and its provenance, it takes
+the athlete's preference seriously and says when it will be honoured, it
+separates what the rating measures from what it does not, and it gives a
+reason to rest that serves the athlete's own goal. It does not moralise, does
+not predict injury, and does not soften the decision into an option.
 """.strip()
 
 

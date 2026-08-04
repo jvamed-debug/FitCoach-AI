@@ -83,6 +83,40 @@ def check_forbidden_language(*textos: str) -> list[Violation]:
 
 # ── §13–15: agente analítico ──────────────────────────────────────────────────
 
+# A regra 9 proíbe ANCORAR uma decisão de carga em CTL não convergido — não
+# proíbe mencionar CTL. Propor "importar histórico para liberar as leituras
+# dependentes de CTL" é a resposta correta ao problema, e um check que olhasse
+# só para a palavra "CTL" reprovaria justamente a melhor opção. Por isso a
+# violação exige as duas coisas: menção a CTL E proposta de progressão.
+_MARCAS_DE_PROGRESSAO = (
+    "aumentar", "elevar", "progredir", "progressão de carga", "subir a carga",
+    "intensificar", "avançar para", "aumento de volume",
+)
+
+# Ressalvas aceitas, em qualquer formulação equivalente. Exigir a frase literal
+# "não convergido" reprovaria redações melhores — "subestimado por construção e
+# não sustenta decisão de progressão" diz mais ao leitor do que o jargão.
+_RESSALVAS_CONVERGENCIA = (
+    "não convergid", "nao convergid",
+    "subestimad",
+    "não sustenta", "nao sustenta",
+    "insuficiente",
+    "bloquead",
+    "não confiável", "nao confiavel",
+    "ainda não", "ainda nao",
+)
+
+
+def _tem_ressalva_de_convergencia(texto: str) -> bool:
+    baixo = texto.lower()
+    return any(marca in baixo for marca in _RESSALVAS_CONVERGENCIA)
+
+
+def _propoe_progressao(texto: str) -> bool:
+    baixo = texto.lower()
+    return any(marca in baixo for marca in _MARCAS_DE_PROGRESSAO)
+
+
 _STATUS_VALIDOS = {"complete", "limited", "blocked"}
 _GRAUS_VALIDOS = {"high", "moderate", "low"}
 _CLASSIFICACOES = {"medida", "estimativa", "convenção", "importado", "dado ausente"}
@@ -129,13 +163,19 @@ def validate_analysis(saida: dict, *, ctl_converged: bool = True) -> ContractRep
                     f"classificação epistêmica inválida em {p.get('metric')!r}: "
                     f"{p.get('classification')!r}")
 
-    # Regra 9: sem CTL convergido, nada pode se ancorar em progressão de CTL.
+    # Regra 9: sem CTL convergido, nenhuma decisão de progressão pode se ancorar
+    # nele. Exige as três condições — menciona CTL, propõe progressão, e não
+    # ressalva — porque cada uma sozinha produziria falso positivo, e um eval
+    # com falso positivo é pior que nenhum: treina quem o lê a ignorá-lo.
     if not ctl_converged:
         for opt in saida.get("coach_options") or []:
             texto = " ".join(str(v) for v in opt.values()) if isinstance(opt, dict) else str(opt)
-            if "CTL" in texto and "não convergido" not in texto and "nao convergido" not in texto:
+            if "CTL" not in texto or not _propoe_progressao(texto):
+                continue
+            if not _tem_ressalva_de_convergencia(texto):
                 rep.add("regra 9", "blocking",
-                        "opção se apoia em CTL sem a ressalva de não convergência")
+                        "opção propõe progressão ancorada em CTL sem ressalvar "
+                        "que a série não convergiu")
 
     # Status tem de refletir a base: base fraca não produz análise "completa".
     if dq.get("grade") == "low" and saida.get("status") == "complete":

@@ -101,6 +101,48 @@ Responda SOMENTE com JSON válido, sem markdown e sem texto fora do JSON:
 
 Use português do Brasil, terminologia técnica, linguagem objetiva e números com
 unidades. Diferencie claramente fato, inferência e incerteza.
+
+EXEMPLO DE SAÍDA BEM CALIBRADA
+
+Contexto: 34 dias de histórico, CTL não convergido, TSS todo estimado por FC,
+sem métricas subjetivas hoje. É o caso difícil — pouca base e mesmo assim é
+preciso ser útil sem inventar confiança.
+
+{
+  "observed_measures": [
+    "Nos últimos 34 dias foram registradas 19 sessões, somando 1.240 TSS.",
+    "O TSS semanal passou de 210 na primeira semana para 340 na quarta.",
+    "Nenhuma sessão registrou potência; todo o TSS é estimativa por frequência cardíaca."
+  ],
+  "permitted_inferences": [
+    "A série mostra aumento monotônico de volume semanal por quatro semanas (inferência a partir da própria série, não avaliação de adequação).",
+    "As sessões concentram-se em terça, quinta e sábado, o que é consistente com a disponibilidade declarada."
+  ],
+  "coach_options": [
+    {
+      "option": "Manter o volume atual por mais duas semanas antes de qualquer progressão.",
+      "rationale": "Com 34 dias de série, o CTL ainda está subestimado por construção e não sustenta decisão de progressão.",
+      "tradeoff": "Se o atleta já vinha treinando antes da janela importada, isso subestima o que ele suporta e atrasa o ciclo."
+    },
+    {
+      "option": "Importar histórico anterior ou semear a série com valores oficiais.",
+      "rationale": "Resolve a causa da limitação em vez de contorná-la; libera as leituras dependentes de CTL.",
+      "tradeoff": "Depende de acesso a dados que podem não existir."
+    }
+  ],
+  "limitations": [
+    "O TSS resume apenas duração e intensidade relativa ao limiar. Não captura ambiente, sono, nutrição, estresse, trabalho de força, doença nem histórico de lesão.",
+    "Com 34 dias de histórico o CTL está subestimado por construção; qualquer leitura de progressão ancorada nele fica bloqueada até a série convergir.",
+    "Sem potenciômetro, os valores de carga são estimativas por FC — trate-os como aproximados.",
+    "Não há métricas subjetivas hoje: sono, fadiga percebida e dor muscular não entraram nesta leitura."
+  ],
+  "safety_flags": []
+}
+
+Repare no que o exemplo NÃO faz: não diz se o aumento de volume foi adequado
+(não há base), não converte a concentração em três dias numa recomendação, não
+atribui causa a nada, e declara a estimativa como estimativa em vez de tratá-la
+como medida.
 """.strip()
 
 
