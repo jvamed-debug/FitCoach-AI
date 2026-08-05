@@ -15,7 +15,7 @@ import logging
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func, desc
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,9 +58,24 @@ def _rec_dict(r: AIRecommendation) -> dict:
     }
 
 
-async def _generate_and_save(db: AsyncSession, athlete: Athlete) -> AIRecommendation:
+async def _generate_and_save(
+    db: AsyncSession,
+    athlete: Athlete,
+    *,
+    available_minutes: int | None = None,
+    preferred_modality: str | None = None,
+) -> AIRecommendation:
     """Build context → call AI → persist recommendation."""
-    ctx = await build_athlete_context(db, str(athlete.id))
+    # A recomendação é para HOJE — é assim que a UI a apresenta e é a data com
+    # que ela é gravada. O prompt pedia "amanhã", o que fazia o agente planejar
+    # um dia e o atleta ler outro; passar a data explicitamente elimina a
+    # ambiguidade e é o que torna a agenda do dia utilizável.
+    ctx = await build_athlete_context(
+        db, str(athlete.id),
+        target_date=date.today(),
+        available_minutes=available_minutes,
+        preferred_modality=preferred_modality,
+    )
     if not ctx:
         raise HTTPException(status_code=404, detail="Contexto do atleta não encontrado")
 
@@ -86,6 +101,9 @@ async def _generate_and_save(db: AsyncSession, athlete: Athlete) -> AIRecommenda
         tokens_used=rec.tokens_used,
         generation_time_ms=rec.generation_time_ms,
         input_context={
+            "target_date": date.today().isoformat(),
+            "available_minutes": available_minutes,
+            "preferred_modality": preferred_modality,
             "tsb": ctx.tsb, "ctl": ctx.ctl, "atl": ctx.atl,
             "metrics_missing": ctx.metrics_missing,
             "data_quality": quality.to_dict(),
@@ -103,7 +121,12 @@ async def _generate_and_save(db: AsyncSession, athlete: Athlete) -> AIRecommenda
             "rationale": rec.rationale,
             "tokens_used": rec.tokens_used,
             "generation_time_ms": rec.generation_time_ms,
+            # Regeneração: o override do dia também precisa ser regravado, senão
+            # o registro de auditoria mostraria a sessão sem o pedido que a gerou.
             "input_context": {
+                "target_date": today.isoformat(),
+                "available_minutes": available_minutes,
+                "preferred_modality": preferred_modality,
                 "tsb": ctx.tsb, "ctl": ctx.ctl, "atl": ctx.atl,
                 "metrics_missing": ctx.metrics_missing,
                 "data_quality": quality.to_dict(),
@@ -148,12 +171,36 @@ async def get_today(
     return _rec_dict(saved)
 
 
+class GenerateRequest(BaseModel):
+    """
+    Ajustes do dia. Ambos opcionais: sem eles vale a disponibilidade semanal
+    declarada no perfil. Com eles, a situação real do dia vence o padrão —
+    é mais específica.
+    """
+    available_minutes: int | None = Field(
+        None, ge=5, le=480,
+        description="Tempo real disponível hoje, em minutos. Teto rígido para a "
+                    "duração total da sessão.",
+    )
+    preferred_modality: str | None = Field(
+        None, max_length=40,
+        description="Modalidade desejada hoje (cycling, running, swimming, "
+                    "strength, mobility). Vence a agenda semanal.",
+    )
+
+
 @router.post("/generate", status_code=201, summary="Forçar nova geração da recomendação de hoje")
 async def force_generate(
+    body: GenerateRequest | None = None,
     athlete: Athlete = Depends(require_lgpd_consent),
     db: AsyncSession = Depends(get_db),
 ):
-    saved = await _generate_and_save(db, athlete)
+    body = body or GenerateRequest()
+    saved = await _generate_and_save(
+        db, athlete,
+        available_minutes=body.available_minutes,
+        preferred_modality=body.preferred_modality,
+    )
     return _rec_dict(saved)
 
 

@@ -14,6 +14,7 @@ rodam na CI sem Postgres e sem chave de API.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Callable
 
 from app.services.ai_service import AthleteContext
@@ -64,6 +65,20 @@ def espera_descanso(plano: dict, ctx: AthleteContext) -> list[str]:
 def espera_sem_intensidade(plano: dict, ctx: AthleteContext) -> list[str]:
     if plano.get("intensity") in ("hard", "very_hard"):
         return [f"intensidade {plano.get('intensity')!r} indevida neste cenário"]
+    return []
+
+
+def espera_dentro_do_tempo(plano: dict, ctx: AthleteContext) -> list[str]:
+    """O teto de tempo é rígido: um treino que não cabe no dia é inútil."""
+    if not ctx.available_minutes:
+        return []
+    total = plano.get("duration_minutes") or 0
+    if total > ctx.available_minutes:
+        return [f"sessão de {total}min excede os {ctx.available_minutes}min disponíveis"]
+    # A soma das seções tem de bater com o total declarado.
+    soma = sum(s.get("duration_minutes") or 0 for s in plano.get("sections") or [])
+    if soma and soma > ctx.available_minutes:
+        return [f"seções somam {soma}min, acima dos {ctx.available_minutes}min disponíveis"]
     return []
 
 
@@ -156,6 +171,35 @@ SCENARIOS: list[Scenario] = [
             ],
         ),
         expectativas=[espera_sem_intensidade],
+    ),
+    Scenario(
+        nome="tempo_curto_no_dia",
+        descricao=(
+            "O atleta tem 40 min hoje e pediu natação, mas a agenda semanal "
+            "marca ciclismo de 90 min nesta terça. O pedido do dia é mais "
+            "específico e vence — e a duração é teto rígido, não sugestão."
+        ),
+        contexto=_ctx(
+            target_date=date(2026, 1, 20),   # terça-feira
+            weekly_availability={"cycling": {"days": ["tue", "thu"], "minutes": 90}},
+            available_minutes=40,
+            preferred_modality="swimming",
+            sport_modalities=["cycling", "swimming"],
+        ),
+        expectativas=[espera_dentro_do_tempo],
+    ),
+    Scenario(
+        nome="dia_sem_nada_agendado",
+        descricao=(
+            "Quarta-feira, e o atleta não marcou nenhuma modalidade para este "
+            "dia. Dia livre é informação, não uma lacuna a preencher com uma "
+            "sessão inventada."
+        ),
+        contexto=_ctx(
+            target_date=date(2026, 1, 21),   # quarta-feira
+            weekly_availability={"cycling": {"days": ["tue", "thu"], "minutes": 90}},
+        ),
+        expectativas=[],
     ),
     Scenario(
         nome="sessoes_duplicadas",

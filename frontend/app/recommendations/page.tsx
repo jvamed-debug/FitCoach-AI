@@ -187,6 +187,8 @@ export default function RecommendationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [feedbackNotes, setFeedbackNotes] = useState("");
+  const [minutosHoje, setMinutosHoje] = useState("");
+  const [modalidadeHoje, setModalidadeHoje] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [rationaleOpen, setRationaleOpen] = useState(false);
@@ -212,6 +214,12 @@ export default function RecommendationsPage() {
   };
 
   const forceGenerate = async () => {
+    // Ajustes do dia. Enviados só quando preenchidos: sem eles vale a
+    // disponibilidade semanal do perfil.
+    const ajustes: Record<string, unknown> = {};
+    if (minutosHoje) ajustes.available_minutes = Number(minutosHoje);
+    if (modalidadeHoje) ajustes.preferred_modality = modalidadeHoje;
+
     setGenerating(true);
     setError(null);
     setRec(null);
@@ -230,7 +238,7 @@ export default function RecommendationsPage() {
         return;
       }
       try {
-        const resp = await api.post("/api/recommendations/generate");
+        const resp = await api.post("/api/recommendations/generate", ajustes);
         if (resp.data?.workout_type) {
           clearInterval(poll);
           setRec(resp.data);
@@ -244,7 +252,7 @@ export default function RecommendationsPage() {
 
     // First attempt immediately
     try {
-      const resp = await api.post("/api/recommendations/generate");
+      const resp = await api.post("/api/recommendations/generate", ajustes);
       if (resp.data?.workout_type) {
         clearInterval(poll);
         setRec(resp.data);
@@ -300,6 +308,63 @@ export default function RecommendationsPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-6 space-y-5">
+
+        {/* Ajustes do dia. Opcionais: em branco, vale a disponibilidade
+            semanal do perfil. Preenchidos, vencem — a situação real de hoje
+            é mais específica que o padrão da semana. */}
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-sm font-medium text-foreground">Ajustar para hoje</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Opcional. Em branco, uso a disponibilidade do seu perfil.
+          </p>
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Tempo disponível</span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={5}
+                  max={480}
+                  step={5}
+                  inputMode="numeric"
+                  placeholder="90"
+                  value={minutosHoje}
+                  onChange={(e) => setMinutosHoje(e.target.value)}
+                  className="w-24 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm text-foreground"
+                />
+                <span className="text-xs text-muted-foreground">min</span>
+              </div>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Modalidade</span>
+              <select
+                value={modalidadeHoje}
+                onChange={(e) => setModalidadeHoje(e.target.value)}
+                className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm text-foreground"
+              >
+                <option value="">Deixar a IA escolher</option>
+                <option value="cycling">Ciclismo</option>
+                <option value="running">Corrida</option>
+                <option value="swimming">Natação</option>
+                <option value="strength">Musculação</option>
+                <option value="mobility">Mobilidade</option>
+              </select>
+            </label>
+            <button
+              onClick={forceGenerate}
+              disabled={generating}
+              className="rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-accent-foreground transition hover:brightness-110 disabled:opacity-40"
+            >
+              {generating ? "Gerando…" : "Gerar com estes ajustes"}
+            </button>
+          </div>
+          {(minutosHoje || modalidadeHoje) && (
+            <p className="mt-2.5 text-xs text-muted-foreground">
+              O tempo é um teto — a sessão não passa dele. A carga acumulada ainda
+              manda: se o descanso for indicado, ele vem mesmo assim.
+            </p>
+          )}
+        </div>
 
         {/* Generating state */}
         {generating && !rec && (

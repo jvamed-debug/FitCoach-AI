@@ -24,6 +24,7 @@ from sqlalchemy import select, func, desc, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.utils.availability import DIA_PT, describe_for_prompt, weekday_key
 from app.models.athlete import Athlete
 from app.models.metric import DailyMetric
 from app.models.workout import Workout
@@ -88,6 +89,14 @@ class AthleteContext:
     # preferência e aderência, nunca resposta fisiológica.
     recent_feedback: list[dict] = field(default_factory=list)
     feedback_patterns: list[dict] = field(default_factory=list)
+    # Dia da sessão. Sem isto o agente vê "cycling: tue, thu, sat" e não tem
+    # como cruzar com a agenda — não sabe que dia é hoje.
+    target_date: date | None = None
+    # Override do dia, informado na hora ("hoje só tenho 40 min", "quero nadar").
+    # Vence a disponibilidade declarada, que é a regra geral; a situação real do
+    # dia é mais específica que o padrão semanal.
+    available_minutes: int | None = None
+    preferred_modality: str | None = None
 
 
 @dataclass
@@ -342,7 +351,7 @@ SYSTEM_PROMPT = """
 You are Dr. Performance — an elite endurance coach, certified strength & conditioning specialist (CSCS), and sports nutritionist. You work with athletes who combine cycling, running, swimming, triathlon, and strength training.
 
 ## YOUR MISSION
-Generate ONE specific training session for TOMORROW, plus a nutrition plan for that day. Be precise, evidence-based, and individualized.
+Generate ONE specific training session for THE DAY NAMED IN THE CONTEXT (see "SESSION DAY, SCHEDULE AND TIME BUDGET"), plus a nutrition plan for that day. Be precise, evidence-based, and individualized.
 
 ## GUARDRAILS (mandatory — epistemic and safety discipline)
 - DESCRIBE load state; NEVER predict injury and NEVER diagnose. The association between acute/chronic imbalance and injury risk is contested in the literature — do not assert it, even softened. Issue no clinical judgment.
@@ -370,6 +379,29 @@ Generate ONE specific training session for TOMORROW, plus a nutrition plan for t
 - muscle_soreness ≥ 8 → avoid strength or high-impact work
 - motivation_score ≤ 3 → prescribe shorter, enjoyable session
 - sleep_quality ≤ 4 → full rest or active recovery only
+
+## MODALITY AND TIME (personalise the session to the actual day)
+The context names the session's day, what the athlete scheduled for that
+weekday, and how long they have. Use all three — a technically perfect session
+the athlete has no time to do is a failed recommendation.
+- **Time is a hard ceiling.** `duration_minutes` must be the TOTAL of every
+  section (warm-up + main set + cool-down) and must never exceed the stated
+  budget. When the budget is tight, cut volume before cutting the warm-up, and
+  compress the session honestly rather than pretending the same stimulus fits.
+- **Duration not declared** means unknown, not unlimited. Infer a plausible
+  duration from the athlete's recent sessions of that modality and say that is
+  what you did.
+- **Prescribe the modality scheduled for that weekday.** If the day has more
+  than one, pick the one the load state favours and explain the choice. If the
+  athlete requested a modality for today, that request wins over the weekly
+  schedule — it is more specific.
+- **A day with nothing scheduled is information, not a blank to fill.** Prefer
+  rest, mobility, or a short optional session, and say the day was free.
+- **Load rules still outrank both.** Having two hours free never justifies
+  intensity the TSB rules forbid; a requested modality never overrides a
+  critical TSB. When you must refuse a request, say plainly why and offer the
+  closest thing you can within that modality (an easy spin instead of
+  intervals) rather than silently substituting something else.
 
 ## ATHLETE FEEDBACK (declared information — shapes HOW, never WHETHER)
 Past ratings, adherence and free-text notes tell you what this athlete
@@ -499,11 +531,32 @@ def format_athlete_context(ctx: AthleteContext) -> str:
         "",
     ]
 
-    if ctx.weekly_availability:
-        lines.append("Weekly availability:")
-        for sport, days in ctx.weekly_availability.items():
-            lines.append(f"  {sport}: {', '.join(days)}")
-        lines.append("")
+    # Dia da sessão + agenda + tempo. Nesta ordem de propósito: o agente precisa
+    # saber QUE DIA é antes de a agenda semanal significar alguma coisa.
+    alvo = ctx.target_date or date.today()
+    lines.append("=== SESSION DAY, SCHEDULE AND TIME BUDGET ===")
+    lines.append(
+        f"This session is for {alvo.isoformat()} "
+        f"({DIA_PT[weekday_key(alvo)]}, '{weekday_key(alvo)}')."
+    )
+    lines += describe_for_prompt(ctx.weekly_availability, alvo)
+
+    # O override do dia vence a agenda declarada — é mais específico.
+    if ctx.available_minutes:
+        lines.append(
+            f"TIME AVAILABLE TODAY: {ctx.available_minutes} minutes — stated by "
+            f"the athlete for this specific day. This is a HARD ceiling and it "
+            f"overrides the weekly declaration. Total session duration "
+            f"(warm-up + main set + cool-down) must not exceed it."
+        )
+    if ctx.preferred_modality:
+        lines.append(
+            f"MODALITY REQUESTED TODAY: {ctx.preferred_modality} — stated by the "
+            f"athlete for this specific day. Honour it unless the load state "
+            f"forbids training at all; if you cannot, say plainly why and offer "
+            f"the closest alternative within that modality."
+        )
+    lines.append("")
 
     if ctx.target_event:
         lines.append(f"Target event: {ctx.target_event}  ({ctx.weeks_to_event} weeks away)")
@@ -615,7 +668,9 @@ def format_athlete_context(ctx: AthleteContext) -> str:
 
     lines += [
         "=== INSTRUCTION ===",
-        "Generate tomorrow's training session JSON. Follow all TSB decision rules.",
+        f"Generate the training session JSON for {alvo.isoformat()} "
+        f"({DIA_PT[weekday_key(alvo)]}). Follow all TSB decision rules, the "
+        f"time budget and the modality scheduled or requested for this day.",
         "Return ONLY valid JSON — no markdown, no preamble, no explanation outside the JSON.",
     ]
 
@@ -1101,7 +1156,14 @@ def _summarize_feedback(recs) -> tuple[list[dict], list[dict]]:
 
 # ── Context builder ───────────────────────────────────────────────────────────
 
-async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteContext | None:
+async def build_athlete_context(
+    db: AsyncSession,
+    athlete_id: str,
+    *,
+    target_date: date | None = None,
+    available_minutes: int | None = None,
+    preferred_modality: str | None = None,
+) -> AthleteContext | None:
     athlete_result = await db.execute(select(Athlete).where(Athlete.id == athlete_id))
     athlete = athlete_result.scalar_one_or_none()
     if not athlete:
@@ -1264,4 +1326,7 @@ async def build_athlete_context(db: AsyncSession, athlete_id: str) -> AthleteCon
         history_days=history_days,
         recent_feedback=recent_feedback,
         feedback_patterns=feedback_patterns,
+        target_date=target_date or today,
+        available_minutes=available_minutes,
+        preferred_modality=preferred_modality,
     )
