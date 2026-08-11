@@ -39,12 +39,19 @@ export interface AdminProfile {
 
 // ── Athlete ───────────────────────────────────────────────────────────────────
 
-export interface WeeklyAvailability {
-  cycling: string[];
-  strength: string[];
-  running?: string[];
-  swimming?: string[];
-}
+/**
+ * Disponibilidade por modalidade.
+ *
+ * Duas formas convivem: a lista de dias (legado, ainda gravada em perfis
+ * antigos) e o objeto com duração, que é o que permite à IA caber o treino no
+ * tempo real do atleta. `minutes: null` significa "não informado" — nunca
+ * "sem limite".
+ */
+export type ModalityAvailability =
+  | string[]
+  | { days: string[]; minutes: number | null };
+
+export type WeeklyAvailability = Record<string, ModalityAvailability>;
 
 export interface AthleteProfile {
   id: string;

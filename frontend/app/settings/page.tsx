@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/lib/store/authStore";
 import type { AthleteProfile } from "@/lib/types";
+import AvailabilityEditor, {
+  parseAvailability,
+  serializeAvailability,
+  type Availability,
+} from "@/components/settings/AvailabilityEditor";
 
 interface Connection {
   provider: string;
@@ -29,6 +34,18 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
+  // Perfil de treino. Estes campos alimentam todo o cálculo de carga: sem FTP
+  // ou FC não há TSS, e sem TSS não há CTL/ATL/TSB nem recomendação
+  // personalizada. Até agora só existiam nas telas de admin.
+  const [ftp, setFtp] = useState("");
+  const [maxHr, setMaxHr] = useState("");
+  const [restHr, setRestHr] = useState("");
+  const [goal, setGoal] = useState("");
+  const [avail, setAvail] = useState<Availability>({});
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!role || !profile) { router.replace("/auth/login"); return; }
     if (role !== "athlete") { router.replace("/dashboard"); return; }
@@ -40,7 +57,13 @@ export default function SettingsPage() {
       api.get("/api/auth/me"),
     ]).then(([connResp, meResp]) => {
       setConnections(connResp.data);
-      setAppleToken((meResp.data as AthleteProfile).apple_health_token ?? null);
+      const me = meResp.data as AthleteProfile;
+      setAppleToken(me.apple_health_token ?? null);
+      setFtp(me.ftp_watts ? String(me.ftp_watts) : "");
+      setMaxHr(me.max_hr ? String(me.max_hr) : "");
+      setRestHr(me.resting_hr ? String(me.resting_hr) : "");
+      setGoal(me.goal ?? "");
+      setAvail(parseAvailability(me.weekly_availability));
     }).finally(() => setLoading(false));
   }, []);
 
@@ -52,6 +75,29 @@ export default function SettingsPage() {
       api.get("/api/auth/oauth/connections").then((r) => setConnections(r.data));
     }
   }, []);
+
+  const salvarPerfil = async () => {
+    setSavingProfile(true);
+    setProfileError(null);
+    setProfileSaved(false);
+    try {
+      // Campo vazio vira null, não zero: "não informado" e "zero" são estados
+      // diferentes, e o agente trata os dois de forma diferente.
+      await api.put("/api/auth/me", {
+        ftp_watts: ftp ? Number(ftp) : null,
+        max_hr: maxHr ? Number(maxHr) : null,
+        resting_hr: restHr ? Number(restHr) : null,
+        goal: goal.trim() || null,
+        weekly_availability: serializeAvailability(avail),
+      });
+      setProfileSaved(true);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setProfileError(msg ?? "Não foi possível salvar. Tente novamente.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const handleConnect = async (provider: string) => {
     // Busca a URL de autorização via XHR (carrega o token), depois redireciona.
@@ -94,6 +140,93 @@ export default function SettingsPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+
+        {/* ── Perfil de treino ──
+            Primeiro na página porque é o que destrava o resto: sem FTP ou FC
+            não existe TSS, e sem TSS não existe carga nem recomendação
+            personalizada. */}
+        <div className="bg-surface rounded-xl border border-border p-6">
+          <h2 className="font-medium text-foreground mb-1">Perfil de treino</h2>
+          <p className="text-xs text-muted-foreground mb-5">
+            É daqui que sai o cálculo de carga. Sem limiares, os treinos importados
+            não geram TSS — e sem TSS não há CTL, ATL nem TSB.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-foreground">FTP (watts)</span>
+              <input
+                type="number" min={50} max={600} inputMode="numeric" placeholder="250"
+                value={ftp} onChange={(e) => setFtp(e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <span className="text-[11px] text-muted-foreground">
+                Potência de limiar. Destrava o TSS medido.
+              </span>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-foreground">FC máxima</span>
+              <input
+                type="number" min={120} max={230} inputMode="numeric" placeholder="185"
+                value={maxHr} onChange={(e) => setMaxHr(e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <span className="text-[11px] text-muted-foreground">bpm</span>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-foreground">FC de repouso</span>
+              <input
+                type="number" min={30} max={100} inputMode="numeric" placeholder="52"
+                value={restHr} onChange={(e) => setRestHr(e.target.value)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              />
+              <span className="text-[11px] text-muted-foreground">
+                Com as duas FC, treinos sem potência viram TSS estimado.
+              </span>
+            </label>
+          </div>
+
+          <label className="mt-4 flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-foreground">Objetivo</span>
+            <input
+              type="text" maxLength={200}
+              placeholder="Ex.: completar um gran fondo de 120 km em outubro"
+              value={goal} onChange={(e) => setGoal(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+            />
+          </label>
+
+          <div className="mt-6">
+            <p className="text-xs font-medium text-foreground">Disponibilidade semanal</p>
+            <p className="mt-0.5 mb-3 text-[11px] text-muted-foreground">
+              Marque os dias de cada modalidade e quanto tempo costuma ter. A duração
+              é o que permite à IA caber o treino no seu dia.
+            </p>
+            <AvailabilityEditor value={avail} onChange={setAvail} />
+          </div>
+
+          <div className="mt-5 flex items-center gap-3">
+            <button
+              onClick={salvarPerfil}
+              disabled={savingProfile}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:brightness-110 disabled:opacity-50"
+            >
+              {savingProfile ? "Salvando…" : "Salvar perfil"}
+            </button>
+            {profileSaved && (
+              <span className="text-xs text-muted-foreground">
+                ✓ Salvo. Re-sincronize o Strava para recalcular os treinos já importados.
+              </span>
+            )}
+            {profileError && (
+              <span className="text-xs" style={{ color: "hsl(var(--critical))" }}>
+                {profileError}
+              </span>
+            )}
+          </div>
+        </div>
 
         {/* ── Platform integrations ── */}
         <div className="bg-surface rounded-xl border border-border p-6">

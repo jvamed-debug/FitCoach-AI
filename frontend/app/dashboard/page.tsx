@@ -153,12 +153,7 @@ export default function DashboardPage() {
                 <CTLATLTSBChart data={loadHistory} />
               </div>
             ) : (
-              <div className="rounded-2xl border border-border bg-surface p-10 text-center">
-                <p className="text-sm text-muted-foreground">Dados insuficientes para o gráfico de carga (PMC).</p>
-                <p className="mt-1 text-xs text-muted-foreground/70">
-                  Conecte o Strava ou registre um treino para começar a construir seu histórico.
-                </p>
-              </div>
+              <PmcVazio temTreinos={recentWorkouts.length > 0} athlete={athlete} />
             )}
 
             {/* Recomendação + Métricas */}
@@ -184,6 +179,59 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Estado vazio do PMC, que diagnostica em vez de chutar.
+ *
+ * A versão anterior dizia sempre "conecte o Strava" — inclusive com o Strava
+ * já conectado e treinos importados. Nesse caso o culpado é outro: sem FTP
+ * nem par de FC, os treinos não geram TSS, e sem TSS não há série de carga.
+ * Mandar o atleta reconectar o Strava o deixaria girando em falso.
+ */
+function PmcVazio({ temTreinos, athlete }: { temTreinos: boolean; athlete: AthleteProfile }) {
+  const semLimiares = !athlete.ftp_watts && !(athlete.max_hr && athlete.resting_hr);
+
+  let causa: string;
+  let acao: React.ReactNode;
+
+  if (temTreinos && semLimiares) {
+    causa = "Seus treinos foram importados, mas não geram carga: falta um limiar para calcular o TSS.";
+    acao = (
+      <>
+        Informe seu <strong>FTP</strong> (ou <strong>FC máxima e de repouso</strong>) em{" "}
+        <Link href="/settings" className="font-medium text-accent hover:underline">
+          Configurações
+        </Link>{" "}
+        e re-sincronize o Strava.
+      </>
+    );
+  } else if (temTreinos) {
+    causa = "Ainda não há dias suficientes para desenhar a curva.";
+    acao = "O gráfico aparece conforme seu histórico cresce — o CTL só fica confiável perto dos 90 dias.";
+  } else {
+    causa = "Nenhum treino registrado ainda.";
+    acao = (
+      <>
+        Conecte o Strava em{" "}
+        <Link href="/settings" className="font-medium text-accent hover:underline">
+          Configurações
+        </Link>{" "}
+        ou{" "}
+        <Link href="/workouts/new" className="font-medium text-accent hover:underline">
+          registre um treino
+        </Link>
+        .
+      </>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-10 text-center">
+      <p className="text-sm text-foreground">{causa}</p>
+      <p className="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">{acao}</p>
     </div>
   );
 }
