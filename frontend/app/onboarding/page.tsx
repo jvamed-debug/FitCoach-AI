@@ -6,6 +6,10 @@ import api from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/lib/store/authStore";
 import type { AthleteProfile } from "@/lib/types";
+import AvailabilityEditor, {
+  serializeAvailability,
+  type Availability,
+} from "@/components/settings/AvailabilityEditor";
 
 const CONSENT_VERSION = "1.0";
 
@@ -25,7 +29,7 @@ Em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei 13.709/2018
 **Contato:** privacidade@fitcoachai.com
 `.trim();
 
-type Step = "invite" | "set-password" | "lgpd" | "profile" | "done";
+type Step = "invite" | "set-password" | "lgpd" | "profile" | "training" | "done";
 
 function OnboardingContent() {
   const router = useRouter();
@@ -112,6 +116,35 @@ function OnboardingContent() {
     }
   };
 
+  // Limiares e disponibilidade. Sem eles os treinos importados não geram TSS,
+  // e o atleta descobre isso só quando o painel aparece vazio sem explicação.
+  const [ftp, setFtp] = useState("");
+  const [maxHr, setMaxHr] = useState("");
+  const [restHr, setRestHr] = useState("");
+  const [goal, setGoal] = useState("");
+  const [avail, setAvail] = useState<Availability>({});
+
+  const handleSaveTraining = async () => {
+    setLoading(true); setError(null);
+    try {
+      const body: Record<string, unknown> = {
+        weekly_availability: serializeAvailability(avail),
+      };
+      if (ftp) body.ftp_watts = parseInt(ftp, 10);
+      if (maxHr) body.max_hr = parseInt(maxHr, 10);
+      if (restHr) body.resting_hr = parseInt(restHr, 10);
+      if (goal.trim()) body.goal = goal.trim();
+      await api.put("/api/auth/me", body);
+      const me = await api.get("/api/auth/me");
+      setAuth(role ?? "athlete", me.data as AthleteProfile);
+      setStep("done");
+    } catch {
+      setError("Erro ao salvar perfil de treino.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
     setLoading(true); setError(null);
     try {
@@ -126,7 +159,7 @@ function OnboardingContent() {
       if (Object.keys(body).length > 0) await api.put("/api/auth/me", body);
       const me = await api.get("/api/auth/me");
       setAuth(role ?? "athlete", me.data as AthleteProfile);
-      setStep("done");
+      setStep("training");
     } catch {
       setError("Erro ao salvar perfil.");
     } finally {
@@ -135,8 +168,8 @@ function OnboardingContent() {
   };
 
   const steps: Step[] = inviteToken
-    ? ["invite", "lgpd", "profile", "done"]
-    : ["lgpd", "profile", "done"];
+    ? ["invite", "lgpd", "profile", "training", "done"]
+    : ["lgpd", "profile", "training", "done"];
 
   const stepIndex = steps.indexOf(step);
 
@@ -287,11 +320,88 @@ function OnboardingContent() {
                 className="flex-1 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-40 transition-colors">
                 {loading ? "Salvando…" : "Salvar e continuar"}
               </button>
-              <button onClick={() => setStep("done")}
+              <button onClick={() => setStep("training")}
                 className="px-4 rounded-lg border border-gray-300 text-sm text-muted-foreground hover:bg-background">
                 Pular
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ── Step: Training profile ──
+            Este passo é o que faz o app funcionar. Sem limiar, os treinos
+            importados não geram TSS; sem TSS não há carga, gráfico nem
+            recomendação personalizada. Antes ele não existia, e o atleta
+            descobria isso pelo painel vazio — sem saber o motivo. */}
+        {step === "training" && (
+          <div className="bg-surface rounded-2xl border border-border p-8">
+            <h2 className="text-xl font-semibold text-foreground mb-1">Como você treina</h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              É daqui que sai o cálculo de carga. Sem pelo menos um limiar, seus
+              treinos entram no app mas não geram TSS — e o painel fica vazio.
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">FTP (W)</label>
+                  <input type="number" inputMode="numeric" value={ftp} onChange={(e) => setFtp(e.target.value)}
+                    placeholder="250"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">FC máx</label>
+                  <input type="number" inputMode="numeric" value={maxHr} onChange={(e) => setMaxHr(e.target.value)}
+                    placeholder="185"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">FC repouso</label>
+                  <input type="number" inputMode="numeric" value={restHr} onChange={(e) => setRestHr(e.target.value)}
+                    placeholder="52"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                O <strong>FTP</strong> dá o TSS medido, para quem tem potenciômetro.
+                As <strong>duas FC juntas</strong> dão o TSS estimado — funciona sem
+                equipamento. Qualquer um dos dois já destrava o cálculo.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Objetivo</label>
+                <input type="text" maxLength={200} value={goal} onChange={(e) => setGoal(e.target.value)}
+                  placeholder="Ex.: completar um gran fondo de 120 km em outubro"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Quando você treina
+                </label>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Marque os dias e quanto tempo costuma ter. A duração é o que
+                  permite à IA caber o treino no seu dia.
+                </p>
+                <AvailabilityEditor value={avail} onChange={setAvail} />
+              </div>
+            </div>
+
+            {error && <div className="mt-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>}
+            <div className="mt-6 flex gap-3">
+              <button onClick={handleSaveTraining} disabled={loading}
+                className="flex-1 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-40 transition-colors">
+                {loading ? "Salvando…" : "Salvar e continuar"}
+              </button>
+              <button onClick={() => setStep("done")}
+                className="px-4 rounded-lg border border-gray-300 text-sm text-muted-foreground hover:bg-background">
+                Depois
+              </button>
+            </div>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Dá para preencher depois em Configurações — mas até lá o painel de
+              carga fica sem dados.
+            </p>
           </div>
         )}
 
