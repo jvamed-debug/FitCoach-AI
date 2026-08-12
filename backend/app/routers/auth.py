@@ -382,6 +382,12 @@ async def get_me(current: dict = Depends(get_current_user_either)):
         "ftp_watts": user.ftp_watts,
         "max_hr": user.max_hr,
         "resting_hr": user.resting_hr,
+        # Estes dois são editáveis pelo atleta e PRECISAM voltar: a tela carrega
+        # o valor atual para dentro do formulário e reenvia o formulário inteiro
+        # ao salvar. Sem eles o editor abriria vazio e o primeiro "salvar"
+        # apagaria a disponibilidade e o objetivo já gravados.
+        "goal": user.goal,
+        "weekly_availability": user.weekly_availability,
         "onboarding_complete": user.onboarding_complete,
         "auto_report_enabled": user.auto_report_enabled,
         "timezone": user.timezone,
