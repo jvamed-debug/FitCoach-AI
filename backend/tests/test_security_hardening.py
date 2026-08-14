@@ -35,7 +35,7 @@ def test_rls_hardening_scopes_policies_to_authenticated():
         assert f'ALTER POLICY "{policy}"' in sql
 
     assert sql.count("TO authenticated") == 11
-    assert sql.count("WITH CHECK") == 10
+    assert sql.count("\n  WITH CHECK") == 10
 
 
 def test_server_only_tables_are_not_granted_to_browser_roles():
