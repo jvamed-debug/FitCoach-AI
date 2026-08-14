@@ -1,4 +1,5 @@
 import time
+from uuid import UUID
 
 import httpx
 from fastapi import Depends, HTTPException, status
@@ -53,6 +54,27 @@ async def _get_jwks_key(kid: str) -> dict | None:
     return _jwks_cache["keys"].get(kid)
 
 
+def _expected_issuer() -> str:
+    """Issuer obrigatório para tokens emitidos por este projeto Supabase."""
+    return f"{settings.supabase_url.rstrip('/')}/auth/v1"
+
+
+def _validate_user_claims(payload: dict, unauthorized: HTTPException) -> dict:
+    """Aceita somente access tokens de usuários permanentes autenticados."""
+    subject = payload.get("sub")
+    if (
+        payload.get("role") != "authenticated"
+        or payload.get("is_anonymous") is True
+        or not isinstance(subject, str)
+    ):
+        raise unauthorized
+    try:
+        UUID(subject)
+    except (TypeError, ValueError):
+        raise unauthorized
+    return payload
+
+
 async def _decode_supabase_jwt(token: str) -> dict:
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,31 +86,36 @@ async def _decode_supabase_jwt(token: str) -> dict:
     except JWTError:
         raise unauthorized
 
+    decode_kwargs = {
+        "audience": "authenticated",
+        "issuer": _expected_issuer(),
+    }
     alg = header.get("alg", "")
     try:
         if alg == "HS256":
             # Caminho legado (segredo compartilhado) — também usado nos testes.
-            return jwt.decode(
+            payload = jwt.decode(
                 token,
                 settings.supabase_jwt_secret,
                 algorithms=["HS256"],
-                options={"verify_aud": False},
+                **decode_kwargs,
             )
-        if alg in ("ES256", "RS256"):
+        elif alg in ("ES256", "RS256"):
             kid = header.get("kid")
             jwk = await _get_jwks_key(kid) if kid else None
             if jwk is None:
                 raise unauthorized
-            return jwt.decode(
+            payload = jwt.decode(
                 token,
                 jwk,
                 algorithms=[alg],
-                options={"verify_aud": False},
+                **decode_kwargs,
             )
-        raise unauthorized
+        else:
+            raise unauthorized
     except JWTError as e:
         raise unauthorized from e
-
+    return _validate_user_claims(payload, unauthorized)
 
 async def get_current_admin(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
