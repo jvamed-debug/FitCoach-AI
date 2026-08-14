@@ -106,7 +106,15 @@ async def athlete_with_consent(db_session: AsyncSession, athlete_user: Athlete) 
 
 
 # ── JWT token helpers ─────────────────────────────────────────────────────────
-def make_jwt(user_id: str, secret: str = None) -> str:
+def make_jwt(
+    user_id: str,
+    secret: str | None = None,
+    *,
+    issuer: str | None = None,
+    audience: str = "authenticated",
+    role: str = "authenticated",
+    is_anonymous: bool = False,
+) -> str:
     from jose import jwt as jose_jwt
     from datetime import datetime, timezone, timedelta
     from app.config import settings
@@ -115,6 +123,9 @@ def make_jwt(user_id: str, secret: str = None) -> str:
         "sub": user_id,
         "iat": datetime.now(timezone.utc),
         "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-        "role": "authenticated",
+        "iss": issuer or f"{settings.supabase_url.rstrip('/')}/auth/v1",
+        "aud": audience,
+        "role": role,
+        "is_anonymous": is_anonymous,
     }
     return jose_jwt.encode(payload, secret or settings.supabase_jwt_secret, algorithm="HS256")

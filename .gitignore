@@ -46,3 +46,6 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Security Master reports
+/security-artifacts/

@@ -46,8 +46,10 @@ npm run type-check
 npm run lint
 ```
 
-O CI (`.github/workflows/ci.yml`) roda `secrets-scan` → backend (lint+tests) →
-frontend (type-check). Nenhum PR deve ser mesclado com o CI vermelho.
+O CI (.github/workflows/ci.yml) roda secrets-scan → security-master → backend
+(lint+tests) → frontend (type-check). Nenhum PR deve ser mesclado com o CI vermelho.
+
+    python scripts/security_master.py --target . --fail-on critical
 
 ## Fora de escopo desta versão
 

@@ -30,6 +30,12 @@ modelo de ameaças, as fronteiras de confiança e os requisitos de produção.
   eventos Stripe deduplicados por `webhook_events` (idempotência).
 - **Autorização entre papéis** — endpoints de escrita exigem JWT válido; separação
   estrita admin × atleta; limite de atletas por plano aplicado no servidor (HTTP 402).
+- **Validação de JWT** — o backend exige assinatura válida, expiração, issuer do
+  projeto, audience authenticated, papel de usuário autenticado e rejeita tokens
+  anônimos ou service_role; o papel da aplicação continua sendo resolvido no banco.
+- **Data API em tabelas server-only** — platform_connections, strength_exercises,
+  audit_logs, lgpd_deletion_requests e webhook_events não concedem privilégios a
+  anon/authenticated.
 - **Brute force / abuso** — recomendado rate limiting no proxy/borda em produção.
 - **Prompt injection na IA** — dados do atleta entram como contexto delimitado; a IA
   gera propostas de treino, **sem** autoridade para executar ações ou alterar dados.

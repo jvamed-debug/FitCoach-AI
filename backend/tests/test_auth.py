@@ -114,6 +114,10 @@ async def test_expired_token_returns_401(client: AsyncClient):
             "sub": str(uuid.uuid4()),
             "exp": datetime.now(timezone.utc) - timedelta(hours=1),
             "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "iss": f"{settings.supabase_url.rstrip('/')}/auth/v1",
+            "aud": "authenticated",
+            "role": "authenticated",
+            "is_anonymous": False,
         },
         settings.supabase_jwt_secret,
         algorithm="HS256",
@@ -292,3 +296,34 @@ async def test_refresh_token(client: AsyncClient, admin_user: AdminUser):
 
     assert resp.status_code == 200
     assert resp.json()["role"] == "admin"
+
+
+@pytest.mark.asyncio
+async def test_wrong_jwt_audience_returns_401(client: AsyncClient, admin_user: AdminUser):
+    token = make_jwt(str(admin_user.user_id), audience="anon")
+    response = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_wrong_jwt_issuer_returns_401(client: AsyncClient, admin_user: AdminUser):
+    token = make_jwt(
+        str(admin_user.user_id),
+        issuer="https://other-project.supabase.co/auth/v1",
+    )
+    response = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_service_role_jwt_returns_401(client: AsyncClient, admin_user: AdminUser):
+    token = make_jwt(str(admin_user.user_id), role="service_role")
+    response = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_anonymous_jwt_returns_401(client: AsyncClient, admin_user: AdminUser):
+    token = make_jwt(str(admin_user.user_id), is_anonymous=True)
+    response = await client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
