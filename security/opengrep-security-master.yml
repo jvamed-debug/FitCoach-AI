@@ -1,0 +1,48 @@
+rules:
+  - id: public-build-variable-suggests-privileged-secret
+    message: Variável exposta no bundle sugere segredo privilegiado. Confirme que somente uma chave explicitamente pública é enviada ao cliente.
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["src/**", "app/**", "pages/**", "components/**", "client/**", "web/**"]
+    pattern-regex: '(?i)\b(?:NEXT_PUBLIC|VITE|REACT_APP|PUBLIC)_[A-Z0-9_]*(?:SERVICE_ROLE|SECRET|PRIVATE|ADMIN)[A-Z0-9_]*\b'
+
+  - id: supabase-service-role-in-client-tree
+    message: service_role/admin SDK não pode estar em árvore que pode compor bundle do cliente.
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["src/**", "app/**", "pages/**", "components/**", "client/**", "web/**"]
+    pattern-regex: '(?i)\b(?:SUPABASE_)?SERVICE_ROLE(?:_KEY)?\b'
+
+  - id: firebase-unrestricted-rule
+    message: Regra Firebase com allow ... if true expõe leitura e/ou escrita sem autenticação/autorização.
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["**/*.rules", "**/firestore.rules", "**/storage.rules"]
+    pattern-regex: '(?i)\ballow\s+(?:read\s*,\s*write|write\s*,\s*read|read|write)\s*:\s*if\s+true\s*;'
+
+  - id: client-side-admin-check
+    message: Um flag de admin no frontend só pode controlar UX; a mesma autorização deve existir em cada endpoint/policy confiável.
+    severity: WARNING
+    languages: [generic]
+    paths:
+      include: ["src/**", "app/**", "pages/**", "components/**", "client/**", "web/**"]
+    pattern-regex: '(?i)(?:is_admin|isAdmin|\.role)[^\n]{0,100}(?:admin|administrator)|(?:admin|administrator)[^\n]{0,100}(?:is_admin|isAdmin|\.role)'
+
+  - id: raw-html-sink
+    message: Sink de HTML bruto detectado. Confirme sanitização, encoding contextual e uma política CSP adequada.
+    severity: WARNING
+    languages: [generic]
+    paths:
+      include: ["src/**", "app/**", "pages/**", "components/**", "client/**", "web/**"]
+    pattern-regex: '(?:dangerouslySetInnerHTML|innerHTML\s*=)'
+
+  - id: unrestricted-multer-upload
+    message: Upload com multer.any() aceita qualquer campo; imponha filtro de tipo, tamanho e quantidade.
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include: ["src/**", "app/**", "api/**", "server/**", "routes/**"]
+    pattern-regex: '\.any\s*\(\s*\)'
